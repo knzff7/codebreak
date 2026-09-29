@@ -1,0 +1,10 @@
+.git
+.gitignore
+.freebuff
+rooms.json
+rooms.json.lock
+rooms.json.tmp
+CODEBREAK-HelioHost.zip
+HELIOHOST-DEPLOY.md
+heliohost-upload
+tests

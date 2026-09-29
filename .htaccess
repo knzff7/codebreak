@@ -1,0 +1,3 @@
+<FilesMatch "^rooms\.json(?:\..*)?$">
+    Require all denied
+</FilesMatch>
