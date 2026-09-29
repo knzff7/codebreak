@@ -75,6 +75,16 @@ function newPlayer($name, $bot=false) {
         'resume_token'=>bin2hex(random_bytes(32))];
 }
 function activePlayers($room) { return array_filter($room['players'], fn($p)=>!$p['eliminated']); }
+function orderedAttackTargets($room, $pid) {
+    $order=$room['turn_order']??[]; $start=array_search($pid,$order,true);
+    if ($start===false) return [];
+    $targets=[]; $count=count($order);
+    for ($step=1;$step<$count;$step++) {
+        $targetId=$order[($start+$step)%$count]??null;
+        if ($targetId!==null && isset($room['players'][$targetId]) && empty($room['players'][$targetId]['eliminated'])) $targets[]=$targetId;
+    }
+    return $targets;
+}
 function finishGame(&$room) {
     if ($room['status']!=='playing') return;
     $active=activePlayers($room);
@@ -131,9 +141,9 @@ function settleGame(&$room) {
             if (!$remaining) { advanceTurn($room); continue; }
             break;
         }
-        foreach (activePlayers($room) as $target) {
-            if ($target['id']!==$pid && empty($room['attacks_this_turn'][$pid][$target['id']])) {
-                recordAttack($room,$pid,$target['id'],generateSecret($room['code_length']));
+        foreach (orderedAttackTargets($room,$pid) as $targetId) {
+            if (empty($room['attacks_this_turn'][$pid][$targetId])) {
+                recordAttack($room,$pid,$targetId,generateSecret($room['code_length']));
             }
         }
         advanceTurn($room);
@@ -295,6 +305,9 @@ if (isset($_GET['action'])) {
                 if ($target===$pid || !isset($room['players'][$target]) || $room['players'][$target]['eliminated']) fail('Недопустимая цель');
                 if (!preg_match('/^[0-9]{'.$room['code_length'].'}$/D',$guess)) fail('Введите ровно '.$room['code_length'].' цифр');
                 if (!empty($room['attacks_this_turn'][$pid][$target])) fail('Этот соперник уже атакован');
+                $nextTarget=null;
+                foreach (orderedAttackTargets($room,$pid) as $orderedId) if (empty($room['attacks_this_turn'][$pid][$orderedId])) { $nextTarget=$orderedId; break; }
+                if ($target!==$nextTarget) fail('Атакуйте следующего игрока по очереди');
                 recordAttack($room,$pid,$target,$guess); settleGame($room); break;
             case 'confirm':
                 if ($room['status']!=='playing' || $room['players'][$pid]['eliminated']) fail('Нельзя подтвердить атаку');
@@ -326,10 +339,14 @@ if (isset($_GET['action'])) {
                 }
                 $history=array_values(array_filter($room['history'],fn($h)=>$spectator || $h['attacker_id']===$pid || $h['target_id']===$pid));
                 $current=$room['status']==='playing'?($room['turn_order'][$room['current_turn_idx']]??null):null;
+                $attackOrder=$current?orderedAttackTargets($room,$current):[];
+                $nextTarget=null;
+                foreach ($attackOrder as $orderedId) if (empty($room['attacks_this_turn'][$current][$orderedId])) { $nextTarget=$orderedId; break; }
                 reply(['status'=>'ok','room_code'=>$code,'room_status'=>$room['status'],'code_length'=>$room['code_length'],
                     'my_id'=>$pid,'host_id'=>$room['host_id'],'is_host'=>$pid===$room['host_id'],
                     'players'=>$players,'history'=>$history,'turn_order'=>$room['turn_order'],
                     'current_turn_player_id'=>$current,'is_my_turn'=>$current===$pid,'round'=>$room['round'],
+                    'attack_order'=>$attackOrder,'next_target_id'=>$nextTarget,
                     'attacks_this_turn'=>$room['attacks_this_turn'],'spectator'=>$spectator,
                     'winner_id'=>$room['winner_id']??null,'resume_token'=>$auth['resume_token']]);
             default: fail('Неизвестное действие');
@@ -702,6 +719,102 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
 @media(prefers-reduced-motion:reduce){
   .attack-stage-card{animation:none!important;transition:none}
 }
+/* Compact vertical game screen: secret, attack pad, then the player fan. */
+#screen-game.active{display:flex;flex-direction:column;max-width:1120px;height:100dvh;min-height:0;padding:7px 14px max(7px,env(safe-area-inset-bottom));overflow:hidden}
+.g-layout,.g-layout.spectator{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:5px;flex:1;min-height:0;overflow:hidden}
+.g-center{justify-content:flex-start;gap:4px;margin:0;min-height:0;overflow:visible;flex-shrink:0}
+.my-secret{flex-shrink:0}
+.my-secret-lbl{margin-bottom:2px}
+.my-secret-val{font-size:1.8rem;padding:4px 14px;letter-spacing:.28em}
+.secret-toggle{width:32px;height:32px}
+.cf-label{margin:0;font-size:.66rem;line-height:1.15}
+.cf-label.is-attacking{padding:3px 8px;margin:0;border-radius:8px}
+.turn-kicker{margin:0 0 2px;font-size:.47rem}
+.turn-match{gap:5px}
+.turn-person{padding:2px 7px;font-size:.8rem}
+.turn-arrow{font-size:.9rem}
+.turn-hint{margin-top:2px;font-size:.59rem}
+.center-field,.center-field.attack-input{width:min(100%,380px);max-width:380px;flex-shrink:0}
+.cf-box,.cf-box.my-turn.attack-box{min-height:46px;padding:5px 10px;border-radius:12px}
+.cf-inp,.cf-code{font-size:1.5rem;letter-spacing:.2em}
+.attack-keypad{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));grid-auto-rows:54px;gap:5px;width:min(100%,760px);margin:0;flex-shrink:0}
+.attack-keypad[hidden]{display:none}
+.attack-keypad .dn-btn{width:auto;height:auto;min-height:54px;border-radius:11px;border:1px solid var(--brd2);background:var(--surf);font-size:1.15rem;touch-action:manipulation}
+.attack-keypad .dn-btn:active{transform:scale(.95);border-color:var(--A);background:rgba(200,241,53,.12)}
+.attack-keypad.confirm-mode .dn-btn.sel{border-color:rgba(255,82,82,.8);background:rgba(255,82,82,.18);color:var(--R);box-shadow:0 0 12px rgba(255,82,82,.18)}
+.hits-picked{margin:0 0 8px;color:var(--A);font:700 .8rem var(--mono);text-align:center}
+.attack-keypad .keypad-control{color:var(--A);font-size:.86rem}
+.cf-actions{width:min(100%,480px);max-width:480px;flex-shrink:0}
+.cf-actions.attack-actions{display:flex;flex-direction:row;align-items:center;gap:6px}
+.cf-actions .btn{padding:7px 10px}
+.cf-actions .keypad-edit{flex:0 0 auto;min-width:43px;padding:8px 10px}
+.cf-actions .keypad-launch{flex:1;padding:8px 10px}
+.g-roster{position:relative;min-height:0;overflow:hidden}
+.g-roster .panel-sub{margin:0 0 3px;font-size:.58rem;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.players-area.target-fan{display:flex;align-items:stretch;gap:0;overflow:hidden;min-height:0;flex:1;padding:3px 0 1px}
+.players-area.target-fan .p-card{position:relative;flex:0 0 28%;width:28%;height:100%;min-height:0;margin-left:-14%;overflow:hidden;border-radius:13px;background:linear-gradient(155deg,var(--surf2),var(--surf) 55%);transition:flex-basis .22s ease,transform .22s ease,box-shadow .2s;box-shadow:0 7px 15px rgba(0,0,0,.24)}
+.players-area.target-fan .p-card:first-child{margin-left:0}
+.players-area.target-fan .p-card.selected{z-index:10;flex-basis:44%;width:44%;border-color:rgba(200,241,53,.72);transform:translateY(-2px);box-shadow:0 9px 24px rgba(0,0,0,.35),0 0 16px rgba(200,241,53,.13)}
+.players-area.target-fan .p-card.attack-target:not(.selected){border-color:rgba(255,82,82,.62)}
+.players-area.target-fan .p-card.compact .p-card-hd{min-height:48px;padding:6px;gap:5px;align-items:center;overflow:hidden}
+.players-area.target-fan .p-card.compact.selected .p-card-hd{min-height:68px;padding:9px;gap:9px}
+.players-area.target-fan .p-card.compact .p-card-av{width:27px;height:27px;flex:0 0 27px}
+.players-area.target-fan .p-card.compact.selected .p-card-av{width:46px;height:46px;flex:0 0 46px;font-size:1.4rem}
+.players-area.target-fan .p-card.compact .p-card-nm{font-size:.7rem;line-height:1.15;white-space:normal;overflow:hidden;overflow-wrap:anywhere}
+.players-area.target-fan .p-card.compact.selected .p-card-nm{font-size:1rem}
+.players-area.target-fan .p-card.compact .p-card-seq{position:absolute;top:5px;right:5px;display:grid;place-items:center;min-width:22px;height:22px;padding:0 4px;border:1px solid rgba(200,241,53,.35);border-radius:7px;background:var(--surf2);color:var(--A);font:700 .62rem var(--mono);letter-spacing:0;z-index:2}
+.players-area.target-fan .p-card.attack-target .p-card-seq{color:var(--R)}
+.players-area.target-fan .p-card-state{font-size:.46rem;line-height:1.1;white-space:normal}
+.players-area.target-fan .p-card.compact .atk-grid{display:none}
+.players-area.target-fan .p-card.compact.selected .atk-grid{display:grid;flex:1;min-height:0;align-content:start;grid-template-rows:repeat(7,minmax(0,auto));gap:2px;padding:4px;border-top:1px solid var(--brd)}
+.players-area.target-fan .atk-row{min-width:0;padding:2px 3px;font-size:.56rem;line-height:1.15;gap:2px}
+.players-area.target-fan .atk-row-g{font-size:.57rem}
+.players-area.target-fan .atk-row-h{font-size:.53rem}
+.history-drawer{width:min(280px,80vw);padding:11px}
+.history-drawer-head{padding-bottom:8px}
+.g-layout.spectator .players-area{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);overflow-y:auto;overflow-x:hidden}
+@media(max-width:700px){
+  #screen-game.active{padding:5px 9px max(5px,env(safe-area-inset-bottom))}
+  .g-hdr{padding-bottom:4px;margin-bottom:4px}
+  .g-title{font-size:.82rem}
+  .room-chip{padding:3px 5px;font-size:.5rem}
+  .history-toggle{gap:4px;padding:5px}
+  .g-layout,.g-layout.spectator{gap:3px}
+  .g-center{gap:3px}
+  .my-secret-val{font-size:1.55rem;padding:3px 10px}
+  .secret-toggle{width:28px;height:28px}
+  .cf-label.is-attacking{padding:2px 6px}
+  .turn-person{padding:1px 5px;font-size:.72rem}
+  .turn-hint{font-size:.53rem}
+  .center-field,.center-field.attack-input{width:min(100%,330px)}
+  .cf-box,.cf-box.my-turn.attack-box{min-height:38px;padding:4px 8px}
+  .cf-inp,.cf-code{font-size:1.3rem}
+  .attack-keypad{grid-template-columns:repeat(10,minmax(0,1fr));grid-auto-rows:48px;gap:3px;width:100%}
+  .attack-keypad .dn-btn{min-height:48px;border-radius:8px;font-size:1rem}
+  .cf-actions{width:min(100%,380px)}
+  .cf-actions .btn{padding:6px 8px;font-size:.7rem}
+  .g-roster .panel-sub{font-size:.52rem}
+  .players-area.target-fan .p-card{flex-basis:27%;width:27%;margin-left:-16%}
+  .players-area.target-fan .p-card:first-child{margin-left:0}
+  .players-area.target-fan .p-card.selected{flex-basis:48%;width:48%}
+  .players-area.target-fan .p-card.compact .p-card-hd{min-height:43px;padding:4px;gap:3px}
+  .players-area.target-fan .p-card.compact.selected .p-card-hd{min-height:58px;padding:6px;gap:6px}
+  .players-area.target-fan .p-card.compact .p-card-av{width:23px;height:23px;flex-basis:23px;font-size:.8rem}
+  .players-area.target-fan .p-card.compact.selected .p-card-av{width:36px;height:36px;flex-basis:36px;font-size:1.1rem}
+  .players-area.target-fan .p-card.compact .p-card-nm{font-size:.61rem}
+  .players-area.target-fan .p-card.compact.selected .p-card-nm{font-size:.84rem}
+  .players-area.target-fan .p-card-state{font-size:.4rem}
+  .players-area.target-fan .p-card.compact.selected .atk-grid{gap:1px;padding:3px}
+  .players-area.target-fan .atk-row{font-size:.5rem;padding:1px 2px;min-height:12px}
+}
+@media(max-height:650px){
+  .my-secret-val{font-size:1.3rem;padding:2px 8px}
+  .secret-toggle{width:25px;height:25px}
+  .attack-keypad{grid-auto-rows:42px}
+  .attack-keypad .dn-btn{min-height:42px}
+  .cf-box,.cf-box.my-turn.attack-box{min-height:33px}
+  .players-area.target-fan .p-card.compact .p-card-hd{min-height:37px}
+}
 </style>
 </head>
 <body>
@@ -792,26 +905,21 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
     </div>
   </div>
 
-  <section id="g-attack-stage" class="attack-stage" aria-label="Текущая атака"></section>
-
   <div class="g-layout" id="g-layout">
   <!-- Центральная зона: мой код + одно поле -->
   <div class="g-center">
     <div class="my-secret" id="g-my-secret"></div>
-    <div class="digit-notes" id="g-digit-notes"></div>
     <div class="cf-label" id="g-cf-label"></div>
     <div class="center-field" id="g-center-field">
       <div class="cf-box waiting" id="g-cf-box">
         <span class="cf-dots" id="g-cf-dots">···</span>
       </div>
     </div>
+    <div class="digit-notes attack-keypad" id="g-digit-notes" hidden aria-label="Цифровая панель для атаки и ответа"></div>
     <div class="cf-actions" id="g-cf-actions"></div>
-    <!-- Выбор цели (только во время моего хода) -->
-    <div class="target-sel" id="g-targets" style="display:none"></div>
   </div>
 
   <section class="g-roster" aria-label="Игроки и история атак">
-    <div id="g-order" class="panel-sub"></div>
     <div class="players-area" id="g-players"></div>
   </section>
   </div>
@@ -1005,19 +1113,42 @@ async function doSetCode(){
   await api('set_code',{secret:val});fetchState();
 }
 
-/* Заметки по цифрам — зачёркивание */
-function renderDigitNotes(){
+/* Экранная клавиатура для кода атаки */
+function renderDigitNotes(mode,attackId){
   var el=document.getElementById('g-digit-notes');
   if(!el) return;
+  mode=mode||'attack';
+  el.dataset.mode=mode;
+  el.dataset.attackId=attackId||'';
+  el.classList.toggle('confirm-mode',mode==='confirm');
   var html='';
   for(var i=0;i<=9;i++){
-    html+='<button class="dn-btn'+(S.crossed[i]?' crossed':'')+'" onclick="toggleDigit('+i+')">'+i+'</button>';
+    var selected=mode==='confirm'&&S.csel[attackId]===i;
+    html+='<button type="button" class="dn-btn'+(selected?' sel':'')+'" onclick="'+(mode==='confirm'?'pickHits(\''+attackId+'\','+i+',this)':'appendAttackDigit('+i+')')+'">'+i+'</button>';
   }
   el.innerHTML=html;
 }
-function toggleDigit(n){
-  S.crossed[n]=!S.crossed[n];
-  renderDigitNotes();
+function updateAttackInput(){
+  var input=document.getElementById('cf-main-inp');
+  if(input){var cl=S.lastData&&S.lastData.code_length||4;input.textContent=S.curTarget?((S.iv[S.curTarget]||'')||'·'.repeat(cl)):'·'.repeat(cl);}
+}
+function appendAttackDigit(n){
+  var cl=S.lastData&&S.lastData.code_length||4,tid=S.curTarget;
+  if(!tid)return;
+  var value=(S.iv[tid]||'');
+  if(value.length>=cl)return;
+  S.iv[tid]=value+String(n);
+  updateAttackInput();
+}
+function removeAttackDigit(){
+  if(!S.curTarget)return;
+  S.iv[S.curTarget]=(S.iv[S.curTarget]||'').slice(0,-1);
+  updateAttackInput();
+}
+function clearAttackCode(){
+  if(!S.curTarget)return;
+  S.iv[S.curTarget]='';
+  updateAttackInput();
 }
 function toggleSecretVisibility(){
   S.secretVisible=!S.secretVisible;
@@ -1032,7 +1163,6 @@ function rGame(data){
   var allP=Object.values(data.players);
   var me=allP.find(function(p){return p.is_me;});
   document.getElementById('g-cf-label').className='cf-label';
-  document.getElementById('g-targets').className='target-sel';
   document.getElementById('g-center-field').className='center-field';
   document.getElementById('g-cf-actions').className='cf-actions';
 
@@ -1041,7 +1171,7 @@ function rGame(data){
   document.getElementById('g-room-chip').innerHTML='Комната: <span>'+data.room_code+'</span>';
   document.getElementById('g-close-wrap').innerHTML='<button class="close-btn" onclick="doLeave()">← Выйти</button>';
   var layout=document.getElementById('g-layout');
-  layout.classList.toggle('spectator',!!data.spectator);
+  layout.classList.toggle('spectator',!!data.spectator||!!(me&&me.eliminated)||data.room_status==='finished');
   document.getElementById('g-history-toggle').hidden=!!data.spectator;
   if(data.spectator&&S.historyOpen)setHistoryOpen(false);
 
@@ -1067,6 +1197,7 @@ function rGame(data){
   var pendingAtk=onMe.length?onMe[0]:null;
 
   if(amElim||finished){
+    document.getElementById('g-digit-notes').hidden=true;
     // Выбыл — показываем баннер, поле неактивно
     document.getElementById('g-cf-label').innerHTML='';
     var box=document.getElementById('g-cf-box');
@@ -1081,7 +1212,6 @@ function rGame(data){
       box.innerHTML=latest?'<div style="font-size:.85rem;text-align:center">'+attackLabel(data,latest)+'<br><strong style="font-size:1.6rem">'+latest.guess+'</strong> — '+(latest.confirmed?latest.hits+' совп.':'ожидает ответа')+'</div>':'<span style="font-size:.9rem">Ожидаем атаку</span>';
     }
     document.getElementById('g-cf-actions').innerHTML='';
-    document.getElementById('g-targets').style.display='none';
   } else if(pendingAtk){
     // Режим: нужно ответить на входящую атаку
     rCenterIncoming(data,pendingAtk,cl,allP);
@@ -1094,15 +1224,15 @@ function rGame(data){
   }
 
   // Карточки игроков
-  renderAttackStage(data,allP);
   rPlayers(data,allP,cl);
   renderHistoryDrawer(data);
-  document.getElementById('g-order').innerHTML='Очередь: '+data.turn_order.map(function(id){var p=data.players[id];return p?'<span style="'+(p.eliminated?'text-decoration:line-through;opacity:.5':'')+'">'+(id===data.current_turn_player_id?'▶ ':'')+p.name+'</span>':'';}).filter(Boolean).join(' → ');
 
 }
 
 /* Центр: входящая атака */
 function rCenterIncoming(data,h,cl,allP){
+  var keypad=document.getElementById('g-digit-notes');
+  keypad.hidden=false;
   var att=allP.find(function(p){return p.id===h.attacker_id;});
   var me=allP.find(function(p){return p.is_me;});
   var an=(att?att.name:'?')+(att&&att.is_bot?' 🤖':'');
@@ -1118,19 +1248,14 @@ function rCenterIncoming(data,h,cl,allP){
   box.className='cf-box incoming';
   box.innerHTML='<span class="cf-code">'+h.guess+'</span>';
 
-  document.getElementById('g-targets').style.display='none';
-
   var sel=S.csel[h.id]!==undefined?S.csel[h.id]:null;
   var ok=sel!==null;
-  var btns='';
-  for(var n=0;n<=cl;n++){
-    btns+='<button class="h-btn'+(sel===n?' sel':'')+'" onclick="pickHits(\''+h.id+'\','+n+',this)">'+n+'</button>';
-  }
+  renderDigitNotes('confirm',h.id);
   var sendOnclick=ok?'sendConfirm(\''+h.id+'\')':'';
   document.getElementById('g-cf-actions').innerHTML=
     '<div class="hits-panel">'
-    +'<div class="hits-lbl">Совпадений по позиции:</div>'
-    +'<div class="hits-btns" id="hits-btns-wrap">'+btns+'</div>'
+    +'<div class="hits-lbl">Нажмите число совпадений на цифровом ряду (0–9):</div>'
+    +'<div class="hits-picked" id="hits-picked">'+(ok?'Выбрано совпадений: '+sel:'Совпадения не выбраны')+'</div>'
     +'<button class="send-btn'+(ok?' ok':'')+'" id="send-btn-main"'+(ok?'':' disabled')
     +(ok?' onclick="'+sendOnclick+'"':'')+'>'
     +(ok?'✓ Отправить':'Выберите число')
@@ -1140,56 +1265,31 @@ function rCenterIncoming(data,h,cl,allP){
 
 /* Центр: мой ход */
 function rCenterMyTurn(data,cl,allP){
-  var opps=allP.filter(function(p){return !p.is_me&&!p.eliminated;});
+  var keypad=document.getElementById('g-digit-notes');
+  keypad.hidden=false;
+  renderDigitNotes();
   var done=data.attacks_this_turn&&data.attacks_this_turn[data.my_id]||{};
   var me=allP.find(function(p){return p.is_me;});
   var mn=me?me.name:'Я';
-
-  // Определяем кто "ждал" — у кого есть неподтверждённые атаки на меня
-  // Сортируем: сначала те кто ждал (отправлял атаки пока не было моего хода)
-  var waiting=opps.filter(function(o){
-    return !done[o.id]&&data.history.some(function(h){
-      return h.attacker_id===o.id&&h.target_id===data.my_id&&!h.confirmed;
-    });
-  });
-  var others=opps.filter(function(o){
-    return !done[o.id]&&!waiting.find(function(w){return w.id===o.id;});
-  });
-  var orderedOpps=waiting.concat(others);
-
-  // Выбираем цель: первая неатакованная из упорядоченного списка
-  if(!S.curTarget||done[S.curTarget]||!opps.some(function(p){return p.id===S.curTarget;})){
-    S.curTarget=orderedOpps.length?orderedOpps[0].id:null;
-  }
+  var attackOrder=data.attack_order||[];
+  var remaining=attackOrder.filter(function(id){return !done[id]&&data.players[id]&&!data.players[id].eliminated;});
+  S.curTarget=data.next_target_id||(remaining.length?remaining[0]:null);
   var curOpp=S.curTarget?allP.find(function(p){return p.id===S.curTarget;}):null;
+  var attackNumber=attackOrder.indexOf(S.curTarget)+1;
 
-  // Кнопки выбора цели — сначала ждавшие
-  var tBtns=opps.map(function(o){
-    var d=!!done[o.id];
-    var isWaiting=waiting.find(function(w){return w.id===o.id;});
-    return '<button class="t-btn attack-card'+(o.id===S.curTarget?' active':'')+(d?' done':'')+(isWaiting?' t-waiting':'')
-      +'" onclick="pickTarget(\''+o.id+'\')">'
-      +(d?'✓ ':isWaiting?'⏳ ':'')+o.name+(o.is_bot?' 🤖':'')
-      +'</button>';
-  }).join('');
-
-  // Над полем: Я → Цель
   if(curOpp){
     document.getElementById('g-cf-label').className='cf-label is-attacking';
-    document.getElementById('g-cf-label').innerHTML='<div class="turn-kicker">⚡ ВАШ ХОД · ВЫБЕРИТЕ ЦЕЛЬ</div>'
+    document.getElementById('g-cf-label').innerHTML='<div class="turn-kicker">⚡ ВАШ ХОД · АТАКА '+attackNumber+' / '+attackOrder.length+'</div>'
       +'<div class="turn-match"><div class="turn-person">'+mn+'</div><div class="turn-arrow">→</div>'
       +'<div class="turn-person target">'+curOpp.name+(curOpp.is_bot?' 🤖':'')+'</div></div>'
-      +'<div class="turn-hint">Ваш ход: '+mn+' атакует '+curOpp.name+'</div>';
+      +'<div class="turn-hint">Цель назначена по очереди игроков</div>';
   } else {
-    document.getElementById('g-cf-label').textContent='Выберите цель';
+    document.getElementById('g-cf-label').textContent='Все доступные цели атакованы';
   }
-
-  document.getElementById('g-targets').style.display='flex';
-  document.getElementById('g-targets').className='target-sel attack-targets';
-  document.getElementById('g-targets').innerHTML=tBtns;
 
   var box=document.getElementById('g-cf-box');
   if(!curOpp||done[curOpp.id]){
+    keypad.hidden=true;
     box.className='cf-box waiting';
     box.innerHTML='<span class="cf-dots">···</span>';
     document.getElementById('g-cf-actions').innerHTML='';
@@ -1200,27 +1300,17 @@ function rCenterMyTurn(data,cl,allP){
   document.getElementById('g-center-field').className='center-field attack-input';
   document.getElementById('g-cf-actions').className='cf-actions attack-actions';
 
-  var existingInp=document.getElementById('cf-main-inp');
-  if(existingInp&&existingInp.dataset.target) S.iv[existingInp.dataset.target]=existingInp.value;
   var val=(S.iv[curOpp.id]||'').replace(/\D/g,'').slice(0,cl);
-  var hadFocus=existingInp&&existingInp.dataset.target===curOpp.id&&document.activeElement===existingInp;
-
-  if(hadFocus){
-    var actEl=document.getElementById('g-cf-actions');
-    if(!actEl.innerHTML) actEl.innerHTML='<button class="btn btn-p btn-full" onclick="doAtk(\''+curOpp.id+'\')">⚡ Атака</button>';
-  } else {
-    box.innerHTML='<input data-target="'+curOpp.id+'" id="cf-main-inp" class="cf-inp" type="text" inputmode="numeric" autocomplete="off"'
-      +' maxlength="'+cl+'" placeholder="'+'·'.repeat(cl)+'"'
-      +' value="'+val+'"'
-      +' oninput="S.iv[\''+curOpp.id+'\' ]=this.value.replace(/\\D/g,\'\').slice(0,'+cl+');this.value=S.iv[\''+curOpp.id+'\']"'
-      +'>';
-    document.getElementById('g-cf-actions').innerHTML=
-      '<button class="btn btn-p btn-full" onclick="doAtk(\''+curOpp.id+'\')">⚡ Атака</button>';
-  }
+  box.innerHTML='<span data-target="'+curOpp.id+'" id="cf-main-inp" class="cf-code" aria-label="Код атаки">'+(val||'·'.repeat(cl))+'</span>';
+  document.getElementById('g-cf-actions').innerHTML=
+    '<button class="btn btn-s keypad-edit" onclick="removeAttackDigit()" aria-label="Удалить последнюю цифру">⌫</button>'
+    +'<button class="btn btn-s keypad-edit" onclick="clearAttackCode()">Очистить</button>'
+    +'<button class="btn btn-p keypad-launch" onclick="doAtk(\''+curOpp.id+'\')">⚡ Атака</button>';
 }
 
 /* Центр: ожидание */
 function rCenterWaiting(data,allP){
+  document.getElementById('g-digit-notes').hidden=true;
   var cur=allP.find(function(p){return p.id===data.current_turn_player_id;});
   var curName=cur?(cur.name+(cur.is_bot?' 🤖':'')):'?';
   // Показываем кого атакует текущий игрок
@@ -1246,7 +1336,6 @@ function rCenterWaiting(data,allP){
     box.innerHTML='<span class="cf-dots">···</span>';
   }
   document.getElementById('g-cf-actions').innerHTML='';
-  document.getElementById('g-targets').style.display='none';
 }
 
 /* Player attack panel */
@@ -1270,39 +1359,6 @@ function attackGridHTML(data,attacks){
       +'<span class="atk-row-h">'+(h.confirmed?h.hits:'?')+'</span></div>';
   }).join('');
 }
-function renderAttackStage(data,allPlayers){
-  var stage=document.getElementById('g-attack-stage');
-  var actorId=data.current_turn_player_id;
-  var history=data.history||[];
-  if(!actorId&&data.room_status==='finished'&&history.length)actorId=history[history.length-1].attacker_id;
-  if(!actorId)actorId=data.my_id;
-  var actor=allPlayers.find(function(p){return p.id===actorId;});
-  if(!actor){stage.innerHTML='';stage.dataset.key='';return;}
-  var attacked=data.current_turn_player_id&&data.attacks_this_turn&&data.attacks_this_turn[data.current_turn_player_id]
-    ?Object.keys(data.attacks_this_turn[data.current_turn_player_id]):[];
-  var selected=data.is_my_turn?S.curTarget:null;
-  if(data.is_my_turn&&selected&&!attacked.includes(selected))attacked.push(selected);
-  if(!attacked.length&&data.room_status==='finished'&&history.length)attacked=[history[history.length-1].target_id];
-  var targetPlayers=allPlayers.filter(function(p){return p.id!==actorId&&(!p.eliminated||attacked.includes(p.id));});
-  var role=data.spectator?'НАБЛЮДЕНИЕ':actor.id===data.my_id?'ВАШ ХОД':'СЕЙЧАС ХОДИТ';
-  var key=JSON.stringify([actorId,role,attacked,selected,targetPlayers.map(function(p){return p.id+':'+p.name;})]);
-  if(stage.dataset.key===key)return;
-  var targets=targetPlayers.map(function(p){
-    var isSelected=p.id===selected, isActive=attacked.includes(p.id)&&!isSelected;
-    return '<div class="attack-stage-card'+(isActive?' active':'')+(isSelected?' selected':'')+'" title="'+p.name+'">'
-      +'<span class="attack-stage-avatar">'+playerAvatar(p.id)+'</span>'
-      +'<span class="attack-stage-name">'+p.name+'</span>'
-      +(isSelected?'<span class="attack-stage-mark">◎</span>':isActive?'<span class="attack-stage-mark">●</span>':'')
-      +'</div>';
-  }).join('');
-  var empty=targetPlayers.length?'':'<div class="attack-stage-empty">'+(data.is_my_turn&&selected?'Ваша цель':'Нет доступных целей')+'</div>';
-  stage.innerHTML=
-    '<div class="attack-stage-source"><span class="attack-stage-avatar">'+playerAvatar(actor.id)+'</span>'
-    +'<div class="attack-stage-name-wrap"><div class="attack-stage-name">'+actor.name+'</div><span class="attack-stage-role">'+role+'</span></div></div>'
-    +'<div class="attack-stage-gap" aria-hidden="true"></div><div class="attack-stage-targets">'+(targets||empty)+'</div>';
-  stage.dataset.key=key;
-}
-
 function renderHistoryDrawer(data){
   var history=data.history||[];
   var list=document.getElementById('g-history-list');
@@ -1322,32 +1378,38 @@ function renderHistoryDrawer(data){
 
 function rPlayers(data,allP,cl){
   var zone=document.getElementById('g-players');
-  var toShow=allP;
+  var toShow=allP.slice();
+  var mePlayer=allP.find(function(p){return p.is_me;});
+  zone.classList.toggle('target-fan',!data.spectator&&!(mePlayer&&mePlayer.eliminated)&&data.room_status!=='finished');
   var curPid=data.current_turn_player_id;
+  var attackOrder=data.attack_order||[];
   var turnTargets=curPid&&data.attacks_this_turn&&data.attacks_this_turn[curPid]
     ?Object.keys(data.attacks_this_turn[curPid]):[];
   var lastTurnTarget=turnTargets.length?turnTargets[turnTargets.length-1]:null;
-  if(data.is_my_turn&&S.curTarget&&!turnTargets.includes(S.curTarget))lastTurnTarget=S.curTarget;
+  var fanLead=data.next_target_id||lastTurnTarget;
+  toShow.sort(function(a,b){
+    function rank(p){if(p.id===fanLead)return -1;var i=attackOrder.indexOf(p.id);return i<0?attackOrder.length+1:i+1;}
+    return rank(a)-rank(b);
+  });
 
   toShow.forEach(function(p){
     var isTurn=p.id===curPid;
     var isElim=p.eliminated;
     var cardId='pcard-'+p.id;
     var myTurnDone=!!(data.attacks_this_turn&&data.attacks_this_turn[data.my_id]&&data.attacks_this_turn[data.my_id][p.id]);
-    var selectedTarget=data.is_my_turn&&S.curTarget===p.id&&!myTurnDone;
+    var selectedTarget=p.id===fanLead;
+    var targetIndex=attackOrder.indexOf(p.id);
     var isAttackTarget=turnTargets.indexOf(p.id)>=0||selectedTarget;
 
     if(!data.spectator){
-      var stateLabel=isElim?'ВЫБЫЛ':selectedTarget?'ЦЕЛЬ ВАШЕЙ АТАКИ':p.id===lastTurnTarget?'ЦЕЛЬ АТАКИ':isTurn?(p.is_me?'ВАШ ХОД':'АТАКУЕТ'):isAttackTarget?'АТАКА В ЭТОМ ХОДУ':myTurnDone?'АТАКА В ЭТОМ ХОДУ':'В ИГРЕ';
       var stateClass=(isTurn?' attack-source':'')+(isAttackTarget?' attack-target':'');
       var compactAttacks=playerHistory(data,p);
-      var compactKey=JSON.stringify({turn:isTurn,elim:isElim,selected:selectedTarget,target:isAttackTarget,done:myTurnDone,name:p.name,host:data.is_host,state:stateLabel,history:compactAttacks.map(function(h){return h.id+':'+h.confirmed+':'+h.hits;})});
+      var compactKey=JSON.stringify({turn:isTurn,elim:isElim,selected:selectedTarget,target:isAttackTarget,done:myTurnDone,name:p.name,host:data.is_host,order:targetIndex,history:compactAttacks.map(function(h){return h.id+':'+h.confirmed+':'+h.hits;})});
       var compact=document.getElementById(cardId);
       if(compact&&compact.dataset.key===compactKey)return;
-      var compactHTML='<div id="'+cardId+'" class="p-card compact'+(isTurn?' turn':'')+(isElim?' elim':'')+(selectedTarget?' selected':'')+stateClass+'"'
-        +(data.is_my_turn&&!p.is_me&&!isElim&&!myTurnDone?' onclick="pickTarget(\''+p.id+'\')"':'')+'>'
+      var compactHTML='<div id="'+cardId+'" class="p-card compact'+(isTurn?' turn':'')+(isElim?' elim':'')+(selectedTarget?' selected':'')+stateClass+'">'
         +'<div class="p-card-hd"><div class="p-card-av">'+playerAvatar(p.id)+'</div>'
-        +'<div class="p-card-nm">'+p.name+(p.is_bot?' 🤖':'')+'<span class="p-card-state">'+stateLabel+'</span></div>'
+        +'<div class="p-card-nm">'+p.name+(p.is_bot?' 🤖':'')+'</div><span class="p-card-seq">'+(targetIndex>=0?'#'+(targetIndex+1):isTurn?'ХОД':'')+'</span>'
         +(isTurn?'<div class="turn-dot"></div>':'')
         +(data.is_host&&!p.is_me&&!isElim?'<button class="kick-btn" onclick="event.stopPropagation();doKick(\''+p.id+'\')">✕</button>':'')
         +'</div><div class="atk-grid">'+attackGridHTML(data,compactAttacks)+'</div></div>';
@@ -1397,21 +1459,18 @@ function rPlayers(data,allP,cl){
   Array.from(zone.children).forEach(function(el){
     if(el.id&&showIds.indexOf(el.id)<0) el.remove();
   });
+  toShow.forEach(function(p){var card=document.getElementById('pcard-'+p.id);if(card)zone.appendChild(card);});
 }
 
 /* ── Выбор цели ── */
-function pickTarget(tid){
-  S.curTarget=tid;
-  if(S.lastData) rGame(S.lastData);
-}
-
 /* ── Выбор совпадений ── */
 function pickHits(hid,n,btn){
   S.csel[hid]=n;
-  // Обновляем только кнопки без перерисовки
-  var wrap=document.getElementById('hits-btns-wrap');
-  if(wrap) wrap.querySelectorAll('.h-btn').forEach(function(b){b.classList.remove('sel');});
+  var keypad=document.getElementById('g-digit-notes');
+  if(keypad)keypad.querySelectorAll('.dn-btn').forEach(function(b){b.classList.remove('sel');});
   btn.classList.add('sel');
+  var picked=document.getElementById('hits-picked');
+  if(picked)picked.textContent='Выбрано совпадений: '+n;
   var sb=document.getElementById('send-btn-main');
   if(sb){sb.classList.add('ok');sb.disabled=false;sb.textContent='✓ Отправить';sb.onclick=function(){sendConfirm(hid);};}
 }
@@ -1427,15 +1486,15 @@ async function sendConfirm(hid){
 async function doAtk(tid){
   var cl=S.lastData&&S.lastData.code_length||4;
   var inp=document.getElementById('cf-main-inp');
-  var val=(inp?inp.value:'').replace(/\D/g,'').slice(0,cl);
+  var val=(S.iv[tid]||'').replace(/\D/g,'').slice(0,cl);
   if(!val||val.length!==cl){
-    if(inp){inp.classList.add('shake');setTimeout(function(){inp.classList.remove('shake');},400);inp.focus({preventScroll:true});}
+    if(inp){inp.classList.add('shake');setTimeout(function(){inp.classList.remove('shake');},400);}
     return;
   }
   var result=await api('attack',{target_id:tid,guess:val});
   if(result.status!=='ok')return;
   S.iv[tid]='';
-  if(inp)inp.value='';
+  if(inp)inp.textContent='';
   S.curTarget=null;
   fetchState();
 }
