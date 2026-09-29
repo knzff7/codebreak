@@ -4,6 +4,7 @@ $configuredDataFile=getenv('CODEBREAK_DATA_FILE');
 define('DATA_FILE', $configuredDataFile!==false && $configuredDataFile!=='' ? $configuredDataFile : __DIR__ . '/rooms.json');
 define('ROOM_EMPTY_TTL', 900);
 define('PLAYER_STALE_AFTER', 90);
+define('MAX_PLAYERS', 6);
 
 function cleanupEmptyRooms(&$rooms) {
     $now=time(); $changed=false;
@@ -214,7 +215,7 @@ if (isset($_GET['action'])) {
                 if (!$pid) {
                     foreach ($room['players'] as $p) if (strcasecmp($p['name'],$name)===0) fail('Этот ник уже в комнате. Для возврата используйте прежний браузер или введите свой PIN.');
                     if ($room['status']!=='lobby') fail('Игра уже началась. Вернуться можно с прежним ником и своим PIN.');
-                    if (count($room['players'])>=4) fail('Комната заполнена');
+                    if (count($room['players'])>=MAX_PLAYERS) fail('Комната заполнена');
                     $p=newPlayer($name); $pid=$p['id']; $room['players'][$pid]=$p;
                 }
             }
@@ -237,7 +238,7 @@ if (isset($_GET['action'])) {
                 $room['code_length']=$len; break;
             case 'add_bot':
                 $bots=array_filter($room['players'],fn($p)=>$p['is_bot']);
-                if (count($bots)>=2 || count($room['players'])>=4) fail('Нет места для бота');
+                if (count($bots)>=2 || count($room['players'])>=MAX_PLAYERS) fail('Нет места для бота');
                 $num=1; $names=array_column($room['players'],'name');
                 while (in_array('BOT'.$num,$names,true)) $num++;
                 $p=newPlayer('BOT'.$num,true); $room['players'][$p['id']]=$p; break;
@@ -559,6 +560,101 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
 .kick-btn:hover{opacity:1;color:var(--R)}
 /* Кнопка назад на join */
 .back{position:absolute;top:20px;left:16px;background:none;border:none;color:var(--mu2);font-family:var(--mono);font-size:.7rem;cursor:pointer;letter-spacing:.1em;padding:8px 0}
+
+/* One-screen game layout */
+#screen-game.active{width:100%;max-width:1120px;height:100dvh;min-height:0;overflow:hidden;padding:8px 14px max(8px,env(safe-area-inset-bottom))}
+.g-hdr{padding-bottom:7px;margin-bottom:8px}
+.g-hdr-right{gap:6px}
+.g-layout{display:grid;grid-template-columns:minmax(300px,.9fr) minmax(0,1.1fr);gap:14px;flex:1;min-height:0;overflow:hidden}
+.g-center{justify-content:center;gap:6px;margin:0;min-height:0;overflow:hidden}
+.g-center .digit-notes{margin-top:0}
+.g-roster{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.g-roster .panel-sub{margin:0 0 6px;font-size:.68rem;flex-shrink:0}
+.players-area{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:7px;margin:0;min-height:0;overflow:hidden}
+.players-area .p-card{min-width:0}
+.p-card.compact{align-self:start;cursor:pointer;transition:border-color .15s,background .15s}
+.p-card.compact:hover,.p-card.compact.selected{border-color:rgba(200,241,53,.38);background:rgba(200,241,53,.04)}
+.p-card.compact .p-card-hd{gap:7px;padding:7px 9px;border:0}
+.p-card.compact .p-card-av{width:27px;height:27px}
+.p-card.compact .p-card-nm{font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-card-state{display:block;color:var(--mu2);font-size:.58rem;font-weight:500;margin-top:2px}
+.history-toggle{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--brd2);border-radius:8px;padding:6px 9px;background:var(--surf);color:var(--tx);font:600 .65rem var(--sans);cursor:pointer}
+.history-toggle span{min-width:18px;padding:2px 4px;border-radius:10px;background:var(--surf2);color:var(--A);font:700 .58rem var(--mono);text-align:center}
+.history-toggle[hidden]{display:none}
+.history-backdrop{position:fixed;z-index:20;inset:0;background:rgba(0,0,0,.58);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s}
+.history-backdrop.open{opacity:1;visibility:visible}
+.history-drawer{position:fixed;z-index:21;inset:0 0 0 auto;width:min(420px,92vw);height:100dvh;padding:14px;background:var(--bg);border-left:1px solid var(--brd2);box-shadow:-20px 0 50px rgba(0,0,0,.4);display:flex;flex-direction:column;transform:translateX(102%);transition:transform .22s ease;overscroll-behavior:contain}
+.history-drawer.open{transform:translateX(0)}
+.history-drawer-head{display:flex;align-items:center;justify-content:space-between;padding:3px 0 12px;border-bottom:1px solid var(--brd);flex-shrink:0}
+.history-drawer-head strong{display:block;font-size:1rem}
+.history-drawer-head span{display:block;margin-top:3px;color:var(--mu2);font-size:.68rem}
+.history-drawer-head button{width:34px;height:34px;border:1px solid var(--brd2);border-radius:9px;background:var(--surf);color:var(--tx);font-size:1.4rem;cursor:pointer}
+.history-list{overflow-y:auto;min-height:0;flex:1;padding:8px 0;overscroll-behavior:contain}
+.history-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px 3px;border-bottom:1px solid var(--brd)}
+.history-entry-label{font-size:.72rem;color:var(--mu2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.history-entry-round{font: .56rem var(--mono);color:var(--mu)}
+.history-entry-code{font:700 .95rem var(--mono);letter-spacing:.1em;color:var(--tx);margin-top:4px}
+.history-entry-result{font:700 .7rem var(--mono);color:var(--A);text-align:right}
+.history-entry-result.pending{color:var(--mu2)}
+.history-empty{padding:20px 4px;color:var(--mu2);font-size:.78rem;text-align:center}
+.players-area.spectator{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow-y:auto;overflow-x:hidden;align-content:start;overscroll-behavior:contain}
+.players-area.spectator .atk-grid{display:flex;flex-direction:column;gap:4px;padding:5px 8px}
+.players-area.spectator .atk-grid>div{min-width:0}
+.g-layout.spectator{grid-template-columns:minmax(250px,.72fr) minmax(0,1.28fr)}
+@media(max-width:700px){
+  #screen-game.active{padding:6px 10px max(6px,env(safe-area-inset-bottom))}
+  .g-title{font-size:.85rem}
+  .room-chip{padding:4px 6px;font-size:.55rem;letter-spacing:.08em}
+  .history-toggle{gap:4px;padding:5px 6px;font-size:.58rem}
+  .close-btn{padding:4px 6px;font-size:.52rem}
+  .g-order{font-size:.56rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .g-layout,.g-layout.spectator{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,auto) minmax(0,1fr);gap:6px}
+  .g-center{gap:4px}
+  .my-secret-lbl{font-size:.46rem;margin-bottom:3px}
+  .my-secret-val{font-size:1.8rem;padding:5px 14px;letter-spacing:.3em}
+  .secret-toggle{width:34px;height:34px}
+  .secret-toggle svg{width:17px;height:17px}
+  .digit-notes{gap:3px}
+  .dn-btn{width:28px;height:28px;font-size:.8rem}
+  .cf-label{font-size:.64rem;margin-bottom:2px}
+  .cf-label.is-attacking{padding:8px 10px;margin:0 0 3px;border-radius:12px}
+  .turn-kicker{margin-bottom:5px;font-size:.52rem}
+  .turn-person{padding:7px 6px;font-size:1rem}
+  .turn-hint{margin-top:5px;font-size:.68rem}
+  .center-field{max-width:100%}
+  .cf-box{min-height:48px;padding:7px 10px}
+  .cf-box.my-turn.attack-box{min-height:54px}
+  .cf-inp,.cf-code{font-size:1.65rem}
+  .cf-actions{max-width:100%;gap:4px}
+  .btn{padding:9px;font-size:.76rem}
+  .hits-panel{padding:6px 8px}
+  .hits-lbl{margin-bottom:4px}
+  .hits-btns{margin-bottom:4px}
+  .h-btn{width:28px;height:28px;font-size:.8rem}
+  .send-btn{padding:7px;font-size:.7rem}
+  .target-sel.attack-targets{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+  .t-btn.attack-card{min-height:35px;padding:6px 4px;font-size:.7rem}
+  .g-roster .panel-sub{font-size:.6rem;margin-bottom:4px}
+  .players-area,.players-area.spectator{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+  .p-card.compact .p-card-hd{padding:5px 7px}
+  .p-card.compact .p-card-av{width:24px;height:24px}
+  .p-card.compact .p-card-nm{font-size:.72rem}
+  .p-card-state{font-size:.53rem}
+  .g-layout.spectator .g-center{gap:2px}
+}
+@media(max-height:700px) and (max-width:700px){
+  .g-hdr{padding-bottom:4px;margin-bottom:4px}
+  .g-title{font-size:.85rem}
+  .g-round{font-size:.45rem}
+  .my-secret-val{font-size:1.5rem;padding:3px 10px}
+  .secret-toggle{width:29px;height:29px}
+  .digit-notes{display:none}
+  .cf-label.is-attacking{padding:5px 8px}
+  .turn-person{padding:5px 4px;font-size:.88rem}
+  .target-sel.attack-targets{gap:3px}
+  .t-btn.attack-card{min-height:30px;padding:4px 2px;font-size:.64rem}
+  .cf-box,.cf-box.my-turn.attack-box{min-height:42px}
+}
 </style>
 </head>
 <body>
@@ -610,7 +706,7 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
     </div>
     <div id="lcnt"></div>
   </div>
-  <div class="sec-lbl">Игроки (макс. 4)</div>
+  <div class="sec-lbl">Игроки (макс. 6)</div>
   <div class="p-list" id="lplayers"></div>
   <div id="lhost"></div>
   <div id="lguest" style="display:none;text-align:center;padding:20px;color:var(--mu2);font-size:.85rem">Ожидаем хоста…</div>
@@ -644,10 +740,12 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
     </div>
     <div class="g-hdr-right">
       <div class="room-chip" id="g-room-chip">Комната: <span>—</span></div>
+      <button id="g-history-toggle" class="history-toggle" type="button" onclick="toggleHistory()" aria-expanded="false">История <span id="g-history-count">0</span></button>
       <div id="g-close-wrap"></div>
     </div>
   </div>
 
+  <div class="g-layout" id="g-layout">
   <!-- Центральная зона: мой код + одно поле -->
   <div class="g-center">
     <div class="my-secret" id="g-my-secret"></div>
@@ -663,8 +761,17 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
     <div class="target-sel" id="g-targets" style="display:none"></div>
   </div>
 
-  <!-- Карточки игроков -->
-  <div id="g-order" class="panel-sub"></div><div class="players-area" id="g-players"></div>
+  <section class="g-roster" aria-label="Игроки и история атак">
+    <div id="g-order" class="panel-sub"></div>
+    <div class="players-area" id="g-players"></div>
+  </section>
+  </div>
+
+  <div id="g-history-backdrop" class="history-backdrop" onclick="toggleHistory()"></div>
+  <aside id="g-history-drawer" class="history-drawer" aria-hidden="true" aria-label="История атак">
+    <div class="history-drawer-head"><div><strong>История атак</strong><span id="g-history-subtitle"></span></div><button type="button" onclick="toggleHistory()" aria-label="Закрыть историю">×</button></div>
+    <div id="g-history-list" class="history-list"></div>
+  </aside>
 </div>
 
 <script>
@@ -675,14 +782,28 @@ var S={
   iv:{},        // значения инпутов
   noScroll:false, // флаг — не скроллить при фокусе
   crossed:{},   // зачёркнутые цифры-заметки {0:true, 3:true, ...}
-  secretVisible:true
+  secretVisible:true,historyOpen:false
 };
 
 function showScreen(n){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById('screen-'+n).classList.add('active');
   S.screen=n;
+  if(n!=='game') setHistoryOpen(false);
 }
+function setHistoryOpen(open){
+  S.historyOpen=!!open;
+  var drawer=document.getElementById('g-history-drawer');
+  var backdrop=document.getElementById('g-history-backdrop');
+  var button=document.getElementById('g-history-toggle');
+  if(!drawer)return;
+  drawer.classList.toggle('open',S.historyOpen);
+  drawer.setAttribute('aria-hidden',String(!S.historyOpen));
+  backdrop.classList.toggle('open',S.historyOpen);
+  button.setAttribute('aria-expanded',String(S.historyOpen));
+}
+function toggleHistory(){setHistoryOpen(!S.historyOpen);}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&S.historyOpen)setHistoryOpen(false);});
 function goCreate(){doCreate(document.getElementById('wname').value.trim()||'Игрок');}
 async function doCreate(name){
   var r=await api('create_room',{name:name,code_length:4});
@@ -750,7 +871,7 @@ async function fetchState(){
 function rLobby(data){
   document.getElementById('lcode').textContent=data.room_code;
   var pl=Object.values(data.players);
-  document.getElementById('lcnt').innerHTML='<div style="font-size:1.6rem;font-weight:800;font-family:var(--mono);text-align:right">'+pl.length+'/4</div><div style="font-size:.55rem;color:var(--mu2)">игроков</div>';
+  document.getElementById('lcnt').innerHTML='<div style="font-size:1.6rem;font-weight:800;font-family:var(--mono);text-align:right">'+pl.length+'/6</div><div style="font-size:.55rem;color:var(--mu2)">игроков</div>';
   document.getElementById('lplayers').innerHTML=pl.map(function(p){
     return '<div class="p-row'+(p.is_me?' me':'')+(p.is_bot?' bot':'')+'">'
       +'<div class="p-av">'+p.name[0].toUpperCase()+'</div>'
@@ -767,9 +888,9 @@ function rLobby(data){
     document.getElementById('lhost').innerHTML=
       '<div class="sec-lbl" style="margin-bottom:8px">Длина кода</div>'
       +'<div class="len-row">'+[4,5,6].map(function(n){return '<div class="len-btn'+(cl===n?' on':'')+'" onclick="setLen('+n+')">'+n+' цифр</div>';}).join('')+'</div>'
-      +'<button class="btn btn-p btn-full" style="margin-bottom:10px" onclick="doStart()"'+(pl.length<2?' disabled':'')+'>Начать игру ('+pl.length+'/4)</button>'
+      +'<button class="btn btn-p btn-full" style="margin-bottom:10px" onclick="doStart()"'+(pl.length<2?' disabled':'')+'>Начать игру ('+pl.length+'/6)</button>'
       +'<div style="display:flex;gap:10px;margin-bottom:10px">'
-      +'<button class="btn btn-s" style="flex:1;font-size:.8rem" onclick="doAddBot()"'+(bc>=2||pl.length>=4?' disabled':'')+'>🤖 + Бот</button>'
+      +'<button class="btn btn-s" style="flex:1;font-size:.8rem" onclick="doAddBot()"'+(bc>=2||pl.length>=6?' disabled':'')+'>🤖 + Бот</button>'
       +(bc>0?'<button class="btn btn-s" style="flex:1;font-size:.8rem;color:var(--R)" onclick="doRemBot()">🤖 − Бот ('+bc+')</button>':'')
       +'</div>'
       +'<button class="btn btn-d btn-full" onclick="doClose()">✕ Закрыть комнату</button>';
@@ -870,6 +991,10 @@ function rGame(data){
   document.getElementById('ground').textContent='Раунд '+data.round;
   document.getElementById('g-room-chip').innerHTML='Комната: <span>'+data.room_code+'</span>';
   document.getElementById('g-close-wrap').innerHTML='<button class="close-btn" onclick="doLeave()">← Выйти</button>';
+  var layout=document.getElementById('g-layout');
+  layout.classList.toggle('spectator',!!data.spectator);
+  document.getElementById('g-history-toggle').hidden=!!data.spectator;
+  if(data.spectator&&S.historyOpen)setHistoryOpen(false);
 
   // Мой секрет
   var mySecret=me&&me.secret||'';
@@ -921,6 +1046,7 @@ function rGame(data){
 
   // Карточки игроков
   rPlayers(data,allP,cl);
+  renderHistoryDrawer(data);
   document.getElementById('g-order').innerHTML='Очередь: '+data.turn_order.map(function(id){var p=data.players[id];return p?'<span style="'+(p.eliminated?'text-decoration:line-through;opacity:.5':'')+'">'+(id===data.current_turn_player_id?'▶ ':'')+p.name+'</span>':'';}).filter(Boolean).join(' → ');
 
 }
@@ -1087,6 +1213,23 @@ function spectatorAttacks(data,targetId){
   }).join('');
 }
 
+function renderHistoryDrawer(data){
+  var history=data.history||[];
+  var list=document.getElementById('g-history-list');
+  var scrollTop=list.scrollTop;
+  document.getElementById('g-history-count').textContent=history.length;
+  document.getElementById('g-history-subtitle').textContent=history.length+' атак, доступных вам';
+  if(!history.length){list.innerHTML='<div class="history-empty">Атак пока нет</div>';return;}
+  list.innerHTML=history.slice().reverse().map(function(h){
+    var result=h.confirmed?('Совпадений: '+h.hits):'Ожидает ответа';
+    return '<article class="history-entry"><div><div class="history-entry-label">'+attackLabel(data,h)+'</div>'
+      +'<div class="history-entry-code">'+h.guess+'</div></div>'
+      +'<div><div class="history-entry-round">Раунд '+h.round+'</div>'
+      +'<div class="history-entry-result'+(h.confirmed?'':' pending')+'">'+result+'</div></div></article>';
+  }).join('');
+  list.scrollTop=scrollTop;
+}
+
 function rPlayers(data,allP,cl){
   var zone=document.getElementById('g-players');
   var toShow=allP.filter(function(p){return data.spectator||!p.is_me;});
@@ -1096,6 +1239,26 @@ function rPlayers(data,allP,cl){
     var isTurn=p.id===curPid;
     var isElim=p.eliminated;
     var cardId='pcard-'+p.id;
+
+    if(!data.spectator){
+      var myTurnDone=!!(data.attacks_this_turn&&data.attacks_this_turn[data.my_id]&&data.attacks_this_turn[data.my_id][p.id]);
+      var selectedTarget=data.is_my_turn&&S.curTarget===p.id&&!myTurnDone;
+      var stateLabel=isElim?'Выбыл':isTurn?'Сейчас ходит':selectedTarget?'Выбрана цель':myTurnDone?'Атака сделана':data.is_my_turn?'Доступная цель':'В игре';
+      var compactKey=JSON.stringify({turn:isTurn,elim:isElim,selected:selectedTarget,done:myTurnDone,name:p.name,host:data.is_host,state:stateLabel});
+      var compact=document.getElementById(cardId);
+      if(compact&&compact.dataset.key===compactKey)return;
+      var compactHTML='<div id="'+cardId+'" class="p-card compact'+(isTurn?' turn':'')+(isElim?' elim':'')+(selectedTarget?' selected':'')+'"'
+        +(data.is_my_turn&&!isElim&&!myTurnDone?' onclick="pickTarget(\''+p.id+'\')"':'')+'>'
+        +'<div class="p-card-hd"><div class="p-card-av">'+p.name[0].toUpperCase()+'</div>'
+        +'<div class="p-card-nm">'+p.name+(p.is_bot?' 🤖':'')+'<span class="p-card-state">'+stateLabel+'</span></div>'
+        +(isTurn?'<div class="turn-dot"></div>':'')
+        +(data.is_host&&!p.is_me&&!isElim?'<button class="kick-btn" onclick="event.stopPropagation();doKick(\''+p.id+'\')">✕</button>':'')
+        +'</div></div>';
+      var compactWrap=document.createElement('div');compactWrap.innerHTML=compactHTML;
+      var compactEl=compactWrap.firstChild;compactEl.dataset.key=compactKey;
+      if(!compact)zone.appendChild(compactEl);else compact.replaceWith(compactEl);
+      return;
+    }
 
     // Строим данные для этой карточки
     var allMyAtks=data.history.filter(function(h){return h.attacker_id===data.my_id&&h.target_id===p.id;});
