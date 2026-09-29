@@ -572,14 +572,20 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
 .g-roster .panel-sub{margin:0 0 6px;font-size:.68rem;flex-shrink:0}
 .players-area{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:7px;margin:0;min-height:0;overflow:hidden}
 .players-area .p-card{min-width:0}
-.p-card.compact{align-self:start;cursor:pointer;transition:border-color .15s,background .15s}
+.p-card.compact{align-self:start;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .2s}
 .p-card.compact:hover,.p-card.compact.selected{border-color:rgba(200,241,53,.38);background:rgba(200,241,53,.04)}
 .p-card.compact .p-card-hd{gap:7px;padding:7px 9px;border:0}
 .p-card.compact .p-card-av{width:27px;height:27px}
 .p-card.compact .p-card-nm{font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.p-card-state{display:block;color:var(--mu2);font-size:.58rem;font-weight:500;margin-top:2px}
-.history-toggle{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--brd2);border-radius:8px;padding:6px 9px;background:var(--surf);color:var(--tx);font:600 .65rem var(--sans);cursor:pointer}
-.history-toggle span{min-width:18px;padding:2px 4px;border-radius:10px;background:var(--surf2);color:var(--A);font:700 .58rem var(--mono);text-align:center}
+.p-card-state{display:block;color:var(--mu2);font-size:.53rem;font-weight:600;letter-spacing:.04em;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-card.attack-source{border-color:rgba(200,241,53,.7);box-shadow:0 0 0 1px rgba(200,241,53,.12),0 0 24px rgba(200,241,53,.14);animation:attacker-breathe 1.8s ease-in-out infinite}
+.p-card.attack-target{border-color:rgba(255,82,82,.7);box-shadow:0 0 0 1px rgba(255,82,82,.12),0 0 22px rgba(255,82,82,.12);animation:target-pulse 1.6s ease-in-out infinite}
+.p-card.attack-target .p-card-state{color:var(--R)}
+.p-card.attack-source .p-card-state{color:var(--A)}
+.history-toggle{position:fixed;z-index:19;right:0;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:7px;border:1px solid var(--brd2);border-right:0;border-radius:11px 0 0 11px;padding:11px 7px;background:linear-gradient(180deg,var(--surf2),var(--surf));color:var(--tx);font:700 .62rem var(--sans);cursor:pointer;box-shadow:0 8px 25px rgba(0,0,0,.3);writing-mode:vertical-rl;text-orientation:mixed;transition:right .22s,background .2s}
+.history-toggle:hover{background:rgba(200,241,53,.12);border-color:rgba(200,241,53,.45)}
+.history-handle-arrow{font-size:1.05rem;color:var(--A);line-height:.7}
+#g-history-count{min-width:18px;padding:2px 4px;border-radius:10px;background:var(--surf2);color:var(--A);font:700 .58rem var(--mono);text-align:center}
 .history-toggle[hidden]{display:none}
 .history-backdrop{position:fixed;z-index:20;inset:0;background:rgba(0,0,0,.58);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s}
 .history-backdrop.open{opacity:1;visibility:visible}
@@ -590,13 +596,25 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
 .history-drawer-head span{display:block;margin-top:3px;color:var(--mu2);font-size:.68rem}
 .history-drawer-head button{width:34px;height:34px;border:1px solid var(--brd2);border-radius:9px;background:var(--surf);color:var(--tx);font-size:1.4rem;cursor:pointer}
 .history-list{overflow-y:auto;min-height:0;flex:1;padding:8px 0;overscroll-behavior:contain}
-.history-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px 3px;border-bottom:1px solid var(--brd)}
-.history-entry-label{font-size:.72rem;color:var(--mu2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.history-entry-round{font: .56rem var(--mono);color:var(--mu)}
-.history-entry-code{font:700 .95rem var(--mono);letter-spacing:.1em;color:var(--tx);margin-top:4px}
-.history-entry-result{font:700 .7rem var(--mono);color:var(--A);text-align:right}
+.history-group{margin:5px 0 9px;border:1px solid var(--brd);border-radius:9px;background:var(--surf);overflow:hidden}
+.history-group-title{padding:6px 8px;background:var(--surf2);color:var(--A);font-size:.62rem;font-weight:700;letter-spacing:.025em;border-bottom:1px solid var(--brd)}
+.history-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center;padding:4px 8px;border-bottom:1px solid var(--brd)}
+.history-entry:last-child{border-bottom:0}
+.history-entry-label{font-size:.57rem;color:var(--mu2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.history-entry-round{font:.5rem var(--mono);color:var(--mu);text-align:right}
+.history-entry-code{font:700 .7rem var(--mono);letter-spacing:.08em;color:var(--tx);margin-top:1px}
+.history-entry-result{font:600 .55rem var(--mono);color:var(--A);text-align:right;margin-top:2px}
 .history-entry-result.pending{color:var(--mu2)}
 .history-empty{padding:20px 4px;color:var(--mu2);font-size:.78rem;text-align:center}
+.g-roster{position:relative}
+.attack-lines{position:absolute;inset:0;width:100%;height:100%;z-index:1;overflow:visible;pointer-events:none}
+.g-roster .panel-sub,.g-roster .players-area{position:relative;z-index:2}
+.attack-ray{fill:none;stroke:rgba(200,241,53,.9);stroke-width:2.5;stroke-linecap:round;stroke-dasharray:9 8;filter:drop-shadow(0 0 5px rgba(200,241,53,.8));animation:attack-flight 1.1s linear infinite}
+.attack-arrow{fill:var(--A);filter:drop-shadow(0 0 5px rgba(200,241,53,.8))}
+.attack-impact{fill:var(--R);filter:drop-shadow(0 0 7px rgba(255,82,82,.9));animation:target-pulse 1s ease-in-out infinite}
+@keyframes attack-flight{to{stroke-dashoffset:-34}}
+@keyframes attacker-breathe{50%{box-shadow:0 0 0 2px rgba(200,241,53,.18),0 0 28px rgba(200,241,53,.23)}}
+@keyframes target-pulse{50%{box-shadow:0 0 0 2px rgba(255,82,82,.18),0 0 26px rgba(255,82,82,.22)}}
 .players-area.spectator{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow-y:auto;overflow-x:hidden;align-content:start;overscroll-behavior:contain}
 .players-area.spectator .atk-grid{display:flex;flex-direction:column;gap:4px;padding:5px 8px}
 .players-area.spectator .atk-grid>div{min-width:0}
@@ -654,6 +672,9 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
   .target-sel.attack-targets{gap:3px}
   .t-btn.attack-card{min-height:30px;padding:4px 2px;font-size:.64rem}
   .cf-box,.cf-box.my-turn.attack-box{min-height:42px}
+}
+@media(prefers-reduced-motion:reduce){
+  .attack-ray,.attack-impact,.p-card.attack-source,.p-card.attack-target{animation:none}
 }
 </style>
 </head>
@@ -740,7 +761,7 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
     </div>
     <div class="g-hdr-right">
       <div class="room-chip" id="g-room-chip">Комната: <span>—</span></div>
-      <button id="g-history-toggle" class="history-toggle" type="button" onclick="toggleHistory()" aria-expanded="false">История <span id="g-history-count">0</span></button>
+      <button id="g-history-toggle" class="history-toggle" type="button" onclick="toggleHistory()" aria-expanded="false"><span class="history-handle-arrow">‹</span> История <span id="g-history-count">0</span></button>
       <div id="g-close-wrap"></div>
     </div>
   </div>
@@ -762,6 +783,7 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
   </div>
 
   <section class="g-roster" aria-label="Игроки и история атак">
+    <svg id="g-attack-lines" class="attack-lines" aria-hidden="true"></svg>
     <div id="g-order" class="panel-sub"></div>
     <div class="players-area" id="g-players"></div>
   </section>
@@ -1218,37 +1240,89 @@ function renderHistoryDrawer(data){
   var list=document.getElementById('g-history-list');
   var scrollTop=list.scrollTop;
   document.getElementById('g-history-count').textContent=history.length;
-  document.getElementById('g-history-subtitle').textContent=history.length+' атак, доступных вам';
+  document.getElementById('g-history-subtitle').textContent=history.length+' атак';
   if(!history.length){list.innerHTML='<div class="history-empty">Атак пока нет</div>';return;}
-  list.innerHTML=history.slice().reverse().map(function(h){
-    var result=h.confirmed?('Совпадений: '+h.hits):'Ожидает ответа';
-    return '<article class="history-entry"><div><div class="history-entry-label">'+attackLabel(data,h)+'</div>'
-      +'<div class="history-entry-code">'+h.guess+'</div></div>'
-      +'<div><div class="history-entry-round">Раунд '+h.round+'</div>'
-      +'<div class="history-entry-result'+(h.confirmed?'':' pending')+'">'+result+'</div></div></article>';
+  var groups={};
+  history.forEach(function(h){(groups[h.target_id]||(groups[h.target_id]=[])).push(h);});
+  list.innerHTML=Object.keys(groups).map(function(targetId){
+    var target=data.players[targetId], targetName=target?target.name:'Игрок';
+    var rows=groups[targetId].slice().reverse().map(function(h){
+      var attacker=data.players[h.attacker_id], attackerName=attacker?attacker.name:'Игрок';
+      var result=h.confirmed?(h.hits+' совп.'):'ожидает';
+      return '<article class="history-entry"><div><div class="history-entry-label">'+attackerName+' · раунд '+h.round+'</div>'
+        +'<div class="history-entry-code">'+h.guess+'</div></div>'
+        +'<div class="history-entry-result'+(h.confirmed?'':' pending')+'">'+result+'</div></article>';
+    }).join('');
+    return '<section class="history-group"><div class="history-group-title">История атак на «'+targetName+'»</div>'+rows+'</section>';
   }).join('');
   list.scrollTop=scrollTop;
 }
 
+function renderAttackLinks(data){
+  var zone=document.getElementById('g-players');
+  var svg=document.getElementById('g-attack-lines');
+  var svgRect=zone.parentElement.getBoundingClientRect();
+  var actorId=data.current_turn_player_id;
+  var targets=actorId&&data.attacks_this_turn&&data.attacks_this_turn[actorId]
+    ?Object.keys(data.attacks_this_turn[actorId]):[];
+  if(data.is_my_turn&&S.curTarget&&!targets.includes(S.curTarget))targets.push(S.curTarget);
+  var width=Math.round(svgRect.width), height=Math.round(svgRect.height);
+  svg.setAttribute('viewBox','0 0 '+width+' '+height);
+  if(!actorId||!targets.length||!width||!height){svg.innerHTML='';svg.dataset.key='';return;}
+  var actor=document.getElementById('pcard-'+actorId);
+  if(!actor){svg.innerHTML='';svg.dataset.key='';return;}
+  var actorRect=actor.getBoundingClientRect();
+  var sx=actorRect.left-svgRect.left+actorRect.width/2;
+  var sy=actorRect.top-svgRect.top+actorRect.height/2;
+  var paths=[];
+  targets.forEach(function(targetId,index){
+    var target=document.getElementById('pcard-'+targetId);
+    if(!target||targetId===actorId)return;
+    var rect=target.getBoundingClientRect();
+    var tx=rect.left-svgRect.left+rect.width/2;
+    var ty=rect.top-svgRect.top+rect.height/2;
+    var dx=tx-sx,dy=ty-sy,length=Math.max(1,Math.sqrt(dx*dx+dy*dy));
+    var sourceRadius=Math.min(actorRect.width,actorRect.height)*.48;
+    var targetRadius=Math.min(rect.width,rect.height)*.48;
+    var pathSx=sx+(dx/length)*sourceRadius,pathSy=sy+(dy/length)*sourceRadius;
+    var pathTx=tx-(dx/length)*targetRadius,pathTy=ty-(dy/length)*targetRadius;
+    var bend=(index%2?1:-1)*Math.min(44,Math.max(18,length*.12));
+    var cx=(pathSx+pathTx)/2-(dy/length)*bend;
+    var cy=(pathSy+pathTy)/2+(dx/length)*bend;
+    paths.push('<path class="attack-ray" style="animation-delay:'+(-index*.18)+'s" d="M '+pathSx.toFixed(1)+' '+pathSy.toFixed(1)+' Q '+cx.toFixed(1)+' '+cy.toFixed(1)+' '+pathTx.toFixed(1)+' '+pathTy.toFixed(1)+'" marker-end="url(#attack-arrow)"/>');
+    paths.push('<circle class="attack-impact" cx="'+pathTx.toFixed(1)+'" cy="'+pathTy.toFixed(1)+'" r="3"><animate attributeName="r" values="2;5;2" dur="1.25s" repeatCount="indefinite"/></circle>');
+  });
+  var key=JSON.stringify([actorId,targets,width,height,sx.toFixed(1),sy.toFixed(1),paths]);
+  if(svg.dataset.key===key)return;
+  svg.innerHTML='<defs><marker id="attack-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="attack-arrow" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>'+paths.join('');
+  svg.dataset.key=key;
+}
+
 function rPlayers(data,allP,cl){
   var zone=document.getElementById('g-players');
-  var toShow=allP.filter(function(p){return data.spectator||!p.is_me;});
+  var toShow=allP;
   var curPid=data.current_turn_player_id;
+  var turnTargets=curPid&&data.attacks_this_turn&&data.attacks_this_turn[curPid]
+    ?Object.keys(data.attacks_this_turn[curPid]):[];
+  var lastTurnTarget=turnTargets.length?turnTargets[turnTargets.length-1]:null;
+  if(data.is_my_turn&&S.curTarget&&!turnTargets.includes(S.curTarget))lastTurnTarget=S.curTarget;
 
   toShow.forEach(function(p){
     var isTurn=p.id===curPid;
     var isElim=p.eliminated;
     var cardId='pcard-'+p.id;
+    var myTurnDone=!!(data.attacks_this_turn&&data.attacks_this_turn[data.my_id]&&data.attacks_this_turn[data.my_id][p.id]);
+    var selectedTarget=data.is_my_turn&&S.curTarget===p.id&&!myTurnDone;
+    var isAttackTarget=turnTargets.indexOf(p.id)>=0||selectedTarget;
 
     if(!data.spectator){
-      var myTurnDone=!!(data.attacks_this_turn&&data.attacks_this_turn[data.my_id]&&data.attacks_this_turn[data.my_id][p.id]);
-      var selectedTarget=data.is_my_turn&&S.curTarget===p.id&&!myTurnDone;
-      var stateLabel=isElim?'Выбыл':isTurn?'Сейчас ходит':selectedTarget?'Выбрана цель':myTurnDone?'Атака сделана':data.is_my_turn?'Доступная цель':'В игре';
-      var compactKey=JSON.stringify({turn:isTurn,elim:isElim,selected:selectedTarget,done:myTurnDone,name:p.name,host:data.is_host,state:stateLabel});
+      var stateLabel=isElim?'ВЫБЫЛ':selectedTarget?'ЦЕЛЬ ВАШЕЙ АТАКИ':p.id===lastTurnTarget?'ЦЕЛЬ АТАКИ':isTurn?(p.is_me?'ВАШ ХОД':'АТАКУЕТ'):isAttackTarget?'АТАКА В ЭТОМ ХОДУ':myTurnDone?'АТАКА В ЭТОМ ХОДУ':'В ИГРЕ';
+      var stateClass=(isTurn?' attack-source':'')+(isAttackTarget?' attack-target':'');
+      var compactKey=JSON.stringify({turn:isTurn,elim:isElim,selected:selectedTarget,target:isAttackTarget,done:myTurnDone,name:p.name,host:data.is_host,state:stateLabel});
       var compact=document.getElementById(cardId);
       if(compact&&compact.dataset.key===compactKey)return;
-      var compactHTML='<div id="'+cardId+'" class="p-card compact'+(isTurn?' turn':'')+(isElim?' elim':'')+(selectedTarget?' selected':'')+'"'
-        +(data.is_my_turn&&!isElim&&!myTurnDone?' onclick="pickTarget(\''+p.id+'\')"':'')+'>'
+      var compactHTML='<div id="'+cardId+'" class="p-card compact'+(isTurn?' turn':'')+(isElim?' elim':'')+(selectedTarget?' selected':'')+stateClass+'"'
+        +(data.is_my_turn&&!p.is_me&&!isElim&&!myTurnDone?' onclick="pickTarget(\''+p.id+'\')"':'')+'>'
         +'<div class="p-card-hd"><div class="p-card-av">'+p.name[0].toUpperCase()+'</div>'
         +'<div class="p-card-nm">'+p.name+(p.is_bot?' 🤖':'')+'<span class="p-card-state">'+stateLabel+'</span></div>'
         +(isTurn?'<div class="turn-dot"></div>':'')
@@ -1271,7 +1345,7 @@ function rPlayers(data,allP,cl){
     // Карточка пересоздаётся только когда реально меняются данные
     var meElimForKey=data.spectator;
     var dataKey=JSON.stringify({
-      turn:isTurn, elim:isElim, meElim:meElimForKey, name:p.name, host:data.is_host, pending:data.attacks_this_turn,
+      turn:isTurn, elim:isElim, meElim:meElimForKey, attackTarget:isAttackTarget, name:p.name, host:data.is_host, pending:data.attacks_this_turn,
       my:allMyAtks.map(function(h){return h.id+':'+h.confirmed+':'+h.hits;}),
       oth:meElimForKey?otherAtks.map(function(h){return h.id+':'+h.confirmed+':'+h.hits;}):[]
     });
@@ -1289,7 +1363,7 @@ function rPlayers(data,allP,cl){
             +'<span class="atk-row-sep">-</span>'
             +'<span class="atk-row-h">'+h.hits+'</span>'
             +'</div>';
-        } else {
+      } else {
           return '<div class="atk-row atk-row-wait">'
             +'<span class="atk-row-g atk-blink">'+h.guess+'</span>'
             +'<span class="atk-row-sep">-</span>'
@@ -1310,7 +1384,7 @@ function rPlayers(data,allP,cl){
     }
     // Активный игрок — чужие атаки не видны совсем
 
-    var cardHTML='<div id="'+cardId+'" class="p-card'+(isTurn?' turn':'')+(isElim?' elim':'')+'">'
+    var cardHTML='<div id="'+cardId+'" class="p-card'+(isTurn?' turn attack-source':'')+(isAttackTarget?' attack-target':'')+(isElim?' elim':'')+'">'
       +'<div class="p-card-hd">'
       +'<div class="p-card-av">'+p.name[0].toUpperCase()+'</div>'
       +'<div class="p-card-nm">'+p.name+(p.is_bot?' 🤖':'')+(isElim?' <span style="font-size:.6rem;color:var(--R)">Выбыл</span>':'')+'</div>'
@@ -1339,6 +1413,7 @@ function rPlayers(data,allP,cl){
   Array.from(zone.children).forEach(function(el){
     if(el.id&&showIds.indexOf(el.id)<0) el.remove();
   });
+  renderAttackLinks(data);
 }
 
 /* ── Выбор цели ── */
