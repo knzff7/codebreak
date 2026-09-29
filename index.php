@@ -523,16 +523,16 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
 .turn-dot{width:7px;height:7px;border-radius:50%;background:var(--A);box-shadow:0 0 8px rgba(200,241,53,.6)}
 
 /* Сетка атак: 3 столбца по 7 строк, заполняется сверху-вниз */
-.atk-grid{padding:5px 8px;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-flow:column;grid-template-rows:repeat(7,auto);gap:2px 4px}
-.atk-row{display:flex;align-items:center;gap:3px;padding:3px 6px;border-radius:5px;background:var(--surf2);font-family:var(--mono);font-size:.72rem;white-space:nowrap;overflow:hidden}
+.atk-grid{padding:5px 8px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:column;grid-template-rows:repeat(7,auto);gap:2px 5px}
+.atk-row{display:flex;align-items:center;gap:3px;padding:2px 4px;border-radius:5px;background:var(--surf2);font-family:var(--mono);font-size:.62rem;line-height:1.1;white-space:nowrap;overflow:hidden;min-height:16px}
 .atk-row-g{font-weight:700;color:var(--tx);letter-spacing:.02em;flex-shrink:0}
 .atk-row-sep{color:var(--mu2);font-size:.65rem;flex-shrink:0}
-.atk-row-h{font-weight:700;color:var(--A);flex-shrink:0}
+.atk-row-h{font-weight:700;color:var(--G);flex-shrink:0}
 .atk-row-wait{background:rgba(200,241,53,.05);border:1px solid rgba(200,241,53,.15)}
 .atk-row-g.atk-blink{animation:blink 1s ease-in-out infinite;color:var(--A)}
 .atk-row-p{color:var(--mu2);font-size:.68rem;animation:pulse 1s infinite;flex-shrink:0}
 .atk-row-hidden{color:var(--mu2);letter-spacing:.08em;flex-shrink:0}
-.atk-empty{padding:10px 14px;font-family:var(--mono);font-size:.72rem;color:var(--mu2)}
+.atk-empty{padding:8px 10px;font-family:var(--mono);font-size:.62rem;color:var(--mu2)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
 
 /* Статус атаки на других */
@@ -570,16 +570,18 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
 .g-center .digit-notes{margin-top:0}
 .g-roster{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
 .g-roster .panel-sub{margin:0 0 6px;font-size:.68rem;flex-shrink:0}
-.players-area{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:7px;margin:0;min-height:0;overflow:hidden}
-.players-area .p-card{min-width:0}
+.players-area{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);align-content:stretch;gap:7px;margin:0;min-height:0;overflow:hidden}
+.players-area .p-card{min-width:0;min-height:0;height:100%;display:flex;flex-direction:column}
+.players-area .p-card .atk-grid{flex:1;min-height:0;align-content:start}
 .p-card.compact{align-self:start;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .2s}
 .p-card.compact:hover,.p-card.compact.selected{border-color:rgba(200,241,53,.38);background:rgba(200,241,53,.04)}
 .p-card.compact .p-card-hd{gap:7px;padding:7px 9px;border:0}
+.p-card.compact .atk-grid{border-top:1px solid var(--brd)}
 .p-card.compact .p-card-av{width:27px;height:27px}
 .p-card.compact .p-card-nm{font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .p-card-state{display:block;color:var(--mu2);font-size:.53rem;font-weight:600;letter-spacing:.04em;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.p-card.attack-source{border-color:rgba(200,241,53,.7);box-shadow:0 0 0 1px rgba(200,241,53,.12),0 0 24px rgba(200,241,53,.14);animation:attacker-breathe 1.8s ease-in-out infinite}
-.p-card.attack-target{border-color:rgba(255,82,82,.7);box-shadow:0 0 0 1px rgba(255,82,82,.12),0 0 22px rgba(255,82,82,.12);animation:target-pulse 1.6s ease-in-out infinite}
+.p-card.attack-source{border-color:rgba(200,241,53,.7);box-shadow:0 0 0 1px rgba(200,241,53,.12),0 0 24px rgba(200,241,53,.14)}
+.p-card.attack-target{border-color:rgba(255,82,82,.7);box-shadow:0 0 0 1px rgba(255,82,82,.12),0 0 22px rgba(255,82,82,.12)}
 .p-card.attack-target .p-card-state{color:var(--R)}
 .p-card.attack-source .p-card-state{color:var(--A)}
 .history-toggle{position:fixed;z-index:19;right:0;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:7px;border:1px solid var(--brd2);border-right:0;border-radius:11px 0 0 11px;padding:11px 7px;background:linear-gradient(180deg,var(--surf2),var(--surf));color:var(--tx);font:700 .62rem var(--sans);cursor:pointer;box-shadow:0 8px 25px rgba(0,0,0,.3);writing-mode:vertical-rl;text-orientation:mixed;transition:right .22s,background .2s}
@@ -607,20 +609,40 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
 .history-entry-result.pending{color:var(--mu2)}
 .history-empty{padding:20px 4px;color:var(--mu2);font-size:.78rem;text-align:center}
 .g-roster{position:relative}
-.attack-lines{position:absolute;inset:0;width:100%;height:100%;z-index:1;overflow:visible;pointer-events:none}
-.g-roster .panel-sub,.g-roster .players-area{position:relative;z-index:2}
-.attack-ray{fill:none;stroke:rgba(200,241,53,.9);stroke-width:2.5;stroke-linecap:round;stroke-dasharray:9 8;filter:drop-shadow(0 0 5px rgba(200,241,53,.8));animation:attack-flight 1.1s linear infinite}
-.attack-arrow{fill:var(--A);filter:drop-shadow(0 0 5px rgba(200,241,53,.8))}
-.attack-impact{fill:var(--R);filter:drop-shadow(0 0 7px rgba(255,82,82,.9));animation:target-pulse 1s ease-in-out infinite}
-@keyframes attack-flight{to{stroke-dashoffset:-34}}
-@keyframes attacker-breathe{50%{box-shadow:0 0 0 2px rgba(200,241,53,.18),0 0 28px rgba(200,241,53,.23)}}
-@keyframes target-pulse{50%{box-shadow:0 0 0 2px rgba(255,82,82,.18),0 0 26px rgba(255,82,82,.22)}}
-.players-area.spectator{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow-y:auto;overflow-x:hidden;align-content:start;overscroll-behavior:contain}
-.players-area.spectator .atk-grid{display:flex;flex-direction:column;gap:4px;padding:5px 8px}
-.players-area.spectator .atk-grid>div{min-width:0}
+.attack-stage{display:flex;align-items:center;gap:10px;min-height:88px;padding:8px 12px;margin:0 0 8px;border:1px solid var(--brd);border-radius:16px;background:linear-gradient(105deg,rgba(200,241,53,.06),var(--surf) 36%,rgba(255,82,82,.05));overflow:hidden;flex-shrink:0}
+.attack-stage-source{width:clamp(118px,20%,190px);flex:0 0 auto;display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid rgba(200,241,53,.3);border-radius:12px;background:rgba(0,0,0,.35)}
+.attack-stage-avatar{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:11px;background:var(--surf2);font-size:1.4rem}
+.attack-stage-name{font-size:.78rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.attack-stage-role{display:block;margin-top:3px;color:var(--A);font:600 .5rem var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.attack-stage-gap{height:2px;min-width:22px;flex:0 0 6%;background:linear-gradient(90deg,rgba(200,241,53,.45),rgba(255,82,82,.4));position:relative}
+.attack-stage-gap:before,.attack-stage-gap:after{content:"";position:absolute;top:-4px;width:10px;height:10px;border:1.5px solid var(--A);border-radius:50%;background:var(--bg)}
+.attack-stage-gap:before{left:0}.attack-stage-gap:after{right:0;border-color:var(--R)}
+.attack-stage-targets{display:flex;gap:5px;align-items:stretch;flex:1;min-width:0;min-height:62px;overflow:hidden}
+.attack-stage-card{flex:1 1 0;min-width:34px;display:flex;align-items:center;justify-content:center;gap:6px;padding:6px;border:1px solid var(--brd2);border-radius:11px;background:var(--surf);overflow:hidden;transition:flex .25s ease,border-color .2s,background .2s,box-shadow .2s}
+.attack-stage-card.active{flex:1.7 1 0;border-color:rgba(255,82,82,.55);background:linear-gradient(145deg,rgba(255,82,82,.13),var(--surf));box-shadow:inset 0 0 18px rgba(255,82,82,.08);animation:accordion-open .35s ease-out both}
+.attack-stage-card.selected{flex:2.2 1 0;border-color:rgba(200,241,53,.65);background:linear-gradient(145deg,rgba(200,241,53,.15),var(--surf));box-shadow:inset 0 0 18px rgba(200,241,53,.08);animation:accordion-open .4s ease-out both}
+.attack-stage-card .attack-stage-avatar{width:31px;height:31px;flex-basis:31px;font-size:1.1rem;border-radius:9px}
+.attack-stage-card .attack-stage-name{font-size:.68rem}
+.attack-stage-card:not(.active):not(.selected) .attack-stage-name{max-width:100%;opacity:.75}
+.attack-stage-card .attack-stage-mark{color:var(--R);font-size:.75rem;flex:0 0 auto}
+.attack-stage-empty{color:var(--mu2);font-size:.62rem;text-align:center;flex:1}
+@keyframes accordion-open{from{opacity:.4;transform:scaleX(.35)}to{opacity:1;transform:scaleX(1)}}
+.history-attack-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:column;grid-template-rows:repeat(7,auto);gap:2px 5px;padding:5px 7px}
+.players-area.spectator{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);overflow-y:auto;overflow-x:hidden;align-content:stretch;overscroll-behavior:contain}
 .g-layout.spectator{grid-template-columns:minmax(250px,.72fr) minmax(0,1.28fr)}
 @media(max-width:700px){
   #screen-game.active{padding:6px 10px max(6px,env(safe-area-inset-bottom))}
+  .attack-stage{min-height:68px;padding:4px 6px;gap:4px;margin-bottom:5px;border-radius:12px}
+  .attack-stage-source{width:clamp(72px,26vw,145px);gap:4px;padding:5px;border-radius:9px}
+  .attack-stage-source .attack-stage-avatar{width:28px;height:28px;flex-basis:28px;font-size:1rem}
+  .attack-stage-source .attack-stage-name{font-size:.64rem}
+  .attack-stage-role{font-size:.43rem;margin-top:2px}
+  .attack-stage-gap{min-width:12px;flex-basis:4%}
+  .attack-stage-targets{gap:2px;min-height:48px}
+  .attack-stage-card{min-width:24px;gap:2px;padding:3px;border-radius:8px}
+  .attack-stage-card .attack-stage-avatar{width:24px;height:24px;flex-basis:24px;font-size:.9rem}
+  .attack-stage-card .attack-stage-name{font-size:.48rem;max-width:1.2ch;opacity:.75}
+  .attack-stage-card.active .attack-stage-name,.attack-stage-card.selected .attack-stage-name{max-width:5rem;opacity:1}
   .g-title{font-size:.85rem}
   .room-chip{padding:4px 6px;font-size:.55rem;letter-spacing:.08em}
   .history-toggle{gap:4px;padding:5px 6px;font-size:.58rem}
@@ -655,9 +677,13 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
   .g-roster .panel-sub{font-size:.6rem;margin-bottom:4px}
   .players-area,.players-area.spectator{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
   .p-card.compact .p-card-hd{padding:5px 7px}
-  .p-card.compact .p-card-av{width:24px;height:24px}
+  .p-card.compact .p-card-av{width:24px;height:24px;font-size:.9rem}
   .p-card.compact .p-card-nm{font-size:.72rem}
   .p-card-state{font-size:.53rem}
+  .atk-grid{gap:2px 3px;padding:4px 6px;grid-template-rows:repeat(7,minmax(0,auto))}
+  .atk-row{padding:2px 3px;font-size:.56rem;min-height:14px}
+  .atk-empty{padding:5px;font-size:.54rem}
+  .history-attack-grid{gap:2px 3px;padding:4px 5px}
   .g-layout.spectator .g-center{gap:2px}
 }
 @media(max-height:700px) and (max-width:700px){
@@ -674,7 +700,7 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
   .cf-box,.cf-box.my-turn.attack-box{min-height:42px}
 }
 @media(prefers-reduced-motion:reduce){
-  .attack-ray,.attack-impact,.p-card.attack-source,.p-card.attack-target{animation:none}
+  .attack-stage-card{animation:none!important;transition:none}
 }
 </style>
 </head>
@@ -766,6 +792,8 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
     </div>
   </div>
 
+  <section id="g-attack-stage" class="attack-stage" aria-label="Текущая атака"></section>
+
   <div class="g-layout" id="g-layout">
   <!-- Центральная зона: мой код + одно поле -->
   <div class="g-center">
@@ -783,7 +811,6 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
   </div>
 
   <section class="g-roster" aria-label="Игроки и история атак">
-    <svg id="g-attack-lines" class="attack-lines" aria-hidden="true"></svg>
     <div id="g-order" class="panel-sub"></div>
     <div class="players-area" id="g-players"></div>
   </section>
@@ -804,7 +831,7 @@ var S={
   iv:{},        // значения инпутов
   noScroll:false, // флаг — не скроллить при фокусе
   crossed:{},   // зачёркнутые цифры-заметки {0:true, 3:true, ...}
-  secretVisible:true,historyOpen:false
+  secretVisible:true,historyOpen:false,avatars:{}
 };
 
 function showScreen(n){
@@ -877,7 +904,7 @@ async function fetchState(){
   }
   remember(data);
   Object.values(data.players).forEach(function(p){p.name=esc(p.name);});
-  if(S.roomCode!==data.room_code){S.curTarget=null;S.iv={};S.csel={};S.crossed={};document.getElementById('g-players').innerHTML='';}
+  if(S.roomCode!==data.room_code){S.curTarget=null;S.iv={};S.csel={};S.crossed={};S.avatars={};document.getElementById('g-players').innerHTML='';}
   S.roomCode=data.room_code;
   S.lastData=data;
   if(data.room_status==='lobby'&&S.screen!=='lobby') showScreen('lobby');
@@ -1067,6 +1094,7 @@ function rGame(data){
   }
 
   // Карточки игроков
+  renderAttackStage(data,allP);
   rPlayers(data,allP,cl);
   renderHistoryDrawer(data);
   document.getElementById('g-order').innerHTML='Очередь: '+data.turn_order.map(function(id){var p=data.players[id];return p?'<span style="'+(p.eliminated?'text-decoration:line-through;opacity:.5':'')+'">'+(id===data.current_turn_player_id?'▶ ':'')+p.name+'</span>':'';}).filter(Boolean).join(' → ');
@@ -1221,18 +1249,58 @@ function rCenterWaiting(data,allP){
   document.getElementById('g-targets').style.display='none';
 }
 
-/* Карточки игроков — всегда все, без сброса скролла */
-function attackLabel(data,h){
-  var attacker=data.players[h.attacker_id], target=data.players[h.target_id];
-  return (attacker?attacker.name:'Игрок')+' → '+(target?target.name:'Игрок');
+/* Player attack panel */
+function playerAvatar(id){
+  var avatars=['🦊','🐼','🐸','🐙','🦁','🐯','🦄','🐵','🐧','🐨','🐲','🦉','🐝','🦖','🐬','🦋'];
+  if(!S.avatars[id])S.avatars[id]=avatars[Math.floor(Math.random()*avatars.length)];
+  return S.avatars[id];
 }
-function spectatorAttacks(data,targetId){
-  var attacks=data.history.filter(function(h){return h.target_id===targetId;});
-  if(!attacks.length)return '<div class="atk-empty">нет атак</div>';
+function playerHistory(data,player){
+  return data.history.filter(function(h){
+    return h.target_id===player.id&&(data.spectator||h.attacker_id===data.my_id||player.id===data.my_id);
+  }).slice(-14);
+}
+function attackGridHTML(data,attacks){
+  if(!attacks.length)return '<div class="atk-empty">атак пока нет</div>';
   return attacks.map(function(h){
-    return '<div style="width:100%;padding:6px 0"><div style="font-size:.65rem;color:var(--mu2)">'+attackLabel(data,h)+' · Раунд '+h.round+'</div>'
-      +'<div class="atk-row'+(h.confirmed?'':' atk-row-wait')+'"><span class="atk-row-g">'+h.guess+'</span><span class="atk-row-sep">—</span><span class="atk-row-h">'+(h.confirmed?h.hits:'?')+'</span></div></div>';
+    var attacker=data.players[h.attacker_id],target=data.players[h.target_id];
+    var title=attacker&&target?attacker.name+' → '+target.name+' · раунд '+h.round:'Раунд '+h.round;
+    return '<div class="atk-row'+(h.confirmed?'':' atk-row-wait')+'" title="'+title+'">'
+      +'<span class="atk-row-g">'+h.guess+'</span><span class="atk-row-sep">-</span>'
+      +'<span class="atk-row-h">'+(h.confirmed?h.hits:'?')+'</span></div>';
   }).join('');
+}
+function renderAttackStage(data,allPlayers){
+  var stage=document.getElementById('g-attack-stage');
+  var actorId=data.current_turn_player_id;
+  var history=data.history||[];
+  if(!actorId&&data.room_status==='finished'&&history.length)actorId=history[history.length-1].attacker_id;
+  if(!actorId)actorId=data.my_id;
+  var actor=allPlayers.find(function(p){return p.id===actorId;});
+  if(!actor){stage.innerHTML='';stage.dataset.key='';return;}
+  var attacked=data.current_turn_player_id&&data.attacks_this_turn&&data.attacks_this_turn[data.current_turn_player_id]
+    ?Object.keys(data.attacks_this_turn[data.current_turn_player_id]):[];
+  var selected=data.is_my_turn?S.curTarget:null;
+  if(data.is_my_turn&&selected&&!attacked.includes(selected))attacked.push(selected);
+  if(!attacked.length&&data.room_status==='finished'&&history.length)attacked=[history[history.length-1].target_id];
+  var targetPlayers=allPlayers.filter(function(p){return p.id!==actorId&&(!p.eliminated||attacked.includes(p.id));});
+  var role=data.spectator?'НАБЛЮДЕНИЕ':actor.id===data.my_id?'ВАШ ХОД':'СЕЙЧАС ХОДИТ';
+  var key=JSON.stringify([actorId,role,attacked,selected,targetPlayers.map(function(p){return p.id+':'+p.name;})]);
+  if(stage.dataset.key===key)return;
+  var targets=targetPlayers.map(function(p){
+    var isSelected=p.id===selected, isActive=attacked.includes(p.id)&&!isSelected;
+    return '<div class="attack-stage-card'+(isActive?' active':'')+(isSelected?' selected':'')+'" title="'+p.name+'">'
+      +'<span class="attack-stage-avatar">'+playerAvatar(p.id)+'</span>'
+      +'<span class="attack-stage-name">'+p.name+'</span>'
+      +(isSelected?'<span class="attack-stage-mark">◎</span>':isActive?'<span class="attack-stage-mark">●</span>':'')
+      +'</div>';
+  }).join('');
+  var empty=targetPlayers.length?'':'<div class="attack-stage-empty">'+(data.is_my_turn&&selected?'Ваша цель':'Нет доступных целей')+'</div>';
+  stage.innerHTML=
+    '<div class="attack-stage-source"><span class="attack-stage-avatar">'+playerAvatar(actor.id)+'</span>'
+    +'<div class="attack-stage-name-wrap"><div class="attack-stage-name">'+actor.name+'</div><span class="attack-stage-role">'+role+'</span></div></div>'
+    +'<div class="attack-stage-gap" aria-hidden="true"></div><div class="attack-stage-targets">'+(targets||empty)+'</div>';
+  stage.dataset.key=key;
 }
 
 function renderHistoryDrawer(data){
@@ -1246,56 +1314,10 @@ function renderHistoryDrawer(data){
   history.forEach(function(h){(groups[h.target_id]||(groups[h.target_id]=[])).push(h);});
   list.innerHTML=Object.keys(groups).map(function(targetId){
     var target=data.players[targetId], targetName=target?target.name:'Игрок';
-    var rows=groups[targetId].slice().reverse().map(function(h){
-      var attacker=data.players[h.attacker_id], attackerName=attacker?attacker.name:'Игрок';
-      var result=h.confirmed?(h.hits+' совп.'):'ожидает';
-      return '<article class="history-entry"><div><div class="history-entry-label">'+attackerName+' · раунд '+h.round+'</div>'
-        +'<div class="history-entry-code">'+h.guess+'</div></div>'
-        +'<div class="history-entry-result'+(h.confirmed?'':' pending')+'">'+result+'</div></article>';
-    }).join('');
-    return '<section class="history-group"><div class="history-group-title">История атак на «'+targetName+'»</div>'+rows+'</section>';
+    return '<section class="history-group"><div class="history-group-title">История атак на «'+targetName+'»</div>'
+      +'<div class="history-attack-grid">'+attackGridHTML(data,groups[targetId].slice(-14))+'</div></section>';
   }).join('');
   list.scrollTop=scrollTop;
-}
-
-function renderAttackLinks(data){
-  var zone=document.getElementById('g-players');
-  var svg=document.getElementById('g-attack-lines');
-  var svgRect=zone.parentElement.getBoundingClientRect();
-  var actorId=data.current_turn_player_id;
-  var targets=actorId&&data.attacks_this_turn&&data.attacks_this_turn[actorId]
-    ?Object.keys(data.attacks_this_turn[actorId]):[];
-  if(data.is_my_turn&&S.curTarget&&!targets.includes(S.curTarget))targets.push(S.curTarget);
-  var width=Math.round(svgRect.width), height=Math.round(svgRect.height);
-  svg.setAttribute('viewBox','0 0 '+width+' '+height);
-  if(!actorId||!targets.length||!width||!height){svg.innerHTML='';svg.dataset.key='';return;}
-  var actor=document.getElementById('pcard-'+actorId);
-  if(!actor){svg.innerHTML='';svg.dataset.key='';return;}
-  var actorRect=actor.getBoundingClientRect();
-  var sx=actorRect.left-svgRect.left+actorRect.width/2;
-  var sy=actorRect.top-svgRect.top+actorRect.height/2;
-  var paths=[];
-  targets.forEach(function(targetId,index){
-    var target=document.getElementById('pcard-'+targetId);
-    if(!target||targetId===actorId)return;
-    var rect=target.getBoundingClientRect();
-    var tx=rect.left-svgRect.left+rect.width/2;
-    var ty=rect.top-svgRect.top+rect.height/2;
-    var dx=tx-sx,dy=ty-sy,length=Math.max(1,Math.sqrt(dx*dx+dy*dy));
-    var sourceRadius=Math.min(actorRect.width,actorRect.height)*.48;
-    var targetRadius=Math.min(rect.width,rect.height)*.48;
-    var pathSx=sx+(dx/length)*sourceRadius,pathSy=sy+(dy/length)*sourceRadius;
-    var pathTx=tx-(dx/length)*targetRadius,pathTy=ty-(dy/length)*targetRadius;
-    var bend=(index%2?1:-1)*Math.min(44,Math.max(18,length*.12));
-    var cx=(pathSx+pathTx)/2-(dy/length)*bend;
-    var cy=(pathSy+pathTy)/2+(dx/length)*bend;
-    paths.push('<path class="attack-ray" style="animation-delay:'+(-index*.18)+'s" d="M '+pathSx.toFixed(1)+' '+pathSy.toFixed(1)+' Q '+cx.toFixed(1)+' '+cy.toFixed(1)+' '+pathTx.toFixed(1)+' '+pathTy.toFixed(1)+'" marker-end="url(#attack-arrow)"/>');
-    paths.push('<circle class="attack-impact" cx="'+pathTx.toFixed(1)+'" cy="'+pathTy.toFixed(1)+'" r="3"><animate attributeName="r" values="2;5;2" dur="1.25s" repeatCount="indefinite"/></circle>');
-  });
-  var key=JSON.stringify([actorId,targets,width,height,sx.toFixed(1),sy.toFixed(1),paths]);
-  if(svg.dataset.key===key)return;
-  svg.innerHTML='<defs><marker id="attack-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="attack-arrow" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>'+paths.join('');
-  svg.dataset.key=key;
 }
 
 function rPlayers(data,allP,cl){
@@ -1318,81 +1340,43 @@ function rPlayers(data,allP,cl){
     if(!data.spectator){
       var stateLabel=isElim?'ВЫБЫЛ':selectedTarget?'ЦЕЛЬ ВАШЕЙ АТАКИ':p.id===lastTurnTarget?'ЦЕЛЬ АТАКИ':isTurn?(p.is_me?'ВАШ ХОД':'АТАКУЕТ'):isAttackTarget?'АТАКА В ЭТОМ ХОДУ':myTurnDone?'АТАКА В ЭТОМ ХОДУ':'В ИГРЕ';
       var stateClass=(isTurn?' attack-source':'')+(isAttackTarget?' attack-target':'');
-      var compactKey=JSON.stringify({turn:isTurn,elim:isElim,selected:selectedTarget,target:isAttackTarget,done:myTurnDone,name:p.name,host:data.is_host,state:stateLabel});
+      var compactAttacks=playerHistory(data,p);
+      var compactKey=JSON.stringify({turn:isTurn,elim:isElim,selected:selectedTarget,target:isAttackTarget,done:myTurnDone,name:p.name,host:data.is_host,state:stateLabel,history:compactAttacks.map(function(h){return h.id+':'+h.confirmed+':'+h.hits;})});
       var compact=document.getElementById(cardId);
       if(compact&&compact.dataset.key===compactKey)return;
       var compactHTML='<div id="'+cardId+'" class="p-card compact'+(isTurn?' turn':'')+(isElim?' elim':'')+(selectedTarget?' selected':'')+stateClass+'"'
         +(data.is_my_turn&&!p.is_me&&!isElim&&!myTurnDone?' onclick="pickTarget(\''+p.id+'\')"':'')+'>'
-        +'<div class="p-card-hd"><div class="p-card-av">'+p.name[0].toUpperCase()+'</div>'
+        +'<div class="p-card-hd"><div class="p-card-av">'+playerAvatar(p.id)+'</div>'
         +'<div class="p-card-nm">'+p.name+(p.is_bot?' 🤖':'')+'<span class="p-card-state">'+stateLabel+'</span></div>'
         +(isTurn?'<div class="turn-dot"></div>':'')
         +(data.is_host&&!p.is_me&&!isElim?'<button class="kick-btn" onclick="event.stopPropagation();doKick(\''+p.id+'\')">✕</button>':'')
-        +'</div></div>';
+        +'</div><div class="atk-grid">'+attackGridHTML(data,compactAttacks)+'</div></div>';
       var compactWrap=document.createElement('div');compactWrap.innerHTML=compactHTML;
       var compactEl=compactWrap.firstChild;compactEl.dataset.key=compactKey;
       if(!compact)zone.appendChild(compactEl);else compact.replaceWith(compactEl);
       return;
     }
 
-    // Строим данные для этой карточки
-    var allMyAtks=data.history.filter(function(h){return h.attacker_id===data.my_id&&h.target_id===p.id;});
-
-
-    var otherAtks=data.history.filter(function(h){return h.target_id===p.id&&h.attacker_id!==data.my_id;});
-
-
-    // Ключ = snapshot данных (без CSS-классов анимации)
-    // Карточка пересоздаётся только когда реально меняются данные
+    var cardAttacks=playerHistory(data,p);
     var meElimForKey=data.spectator;
     var dataKey=JSON.stringify({
       turn:isTurn, elim:isElim, meElim:meElimForKey, attackTarget:isAttackTarget, name:p.name, host:data.is_host, pending:data.attacks_this_turn,
-      my:allMyAtks.map(function(h){return h.id+':'+h.confirmed+':'+h.hits;}),
-      oth:meElimForKey?otherAtks.map(function(h){return h.id+':'+h.confirmed+':'+h.hits;}):[]
+      attacks:cardAttacks.map(function(h){return h.id+':'+h.confirmed+':'+h.hits;})
     });
 
     var existing=document.getElementById(cardId);
     if(existing&&existing.dataset.key===dataKey) return; // ничего не изменилось — не трогаем
 
-    // Строим HTML только если изменилось
-    var gridHTML='';
-    if(allMyAtks.length){
-      gridHTML=allMyAtks.map(function(h){
-        if(h.confirmed){
-          return '<div class="atk-row">'
-            +'<span class="atk-row-g">'+h.guess+'</span>'
-            +'<span class="atk-row-sep">-</span>'
-            +'<span class="atk-row-h">'+h.hits+'</span>'
-            +'</div>';
-      } else {
-          return '<div class="atk-row atk-row-wait">'
-            +'<span class="atk-row-g atk-blink">'+h.guess+'</span>'
-            +'<span class="atk-row-sep">-</span>'
-            +'<span class="atk-row-p">?</span>'
-            +'</div>';
-        }
-      }).join('');
-    } else {
-      gridHTML='<div class="atk-empty">нет атак</div>';
-    }
-
-    // Я выбыл — вижу все цифры всех атак. Активный — только свои.
-    var amElim=data.spectator;
-
-    var incHTML='';
-    if(amElim){
-      gridHTML=spectatorAttacks(data,p.id);
-    }
-    // Активный игрок — чужие атаки не видны совсем
+    var gridHTML=attackGridHTML(data,cardAttacks);
 
     var cardHTML='<div id="'+cardId+'" class="p-card'+(isTurn?' turn attack-source':'')+(isAttackTarget?' attack-target':'')+(isElim?' elim':'')+'">'
       +'<div class="p-card-hd">'
-      +'<div class="p-card-av">'+p.name[0].toUpperCase()+'</div>'
+      +'<div class="p-card-av">'+playerAvatar(p.id)+'</div>'
       +'<div class="p-card-nm">'+p.name+(p.is_bot?' 🤖':'')+(isElim?' <span style="font-size:.6rem;color:var(--R)">Выбыл</span>':'')+'</div>'
       +(isTurn?'<div class="turn-dot"></div>':'')
       +(data.is_host&&!p.is_me&&!isElim?'<button class="kick-btn" onclick="doKick(\''+p.id+'\')">✕</button>':'')
       +'</div>'
-      +(gridHTML?'<div class="atk-grid">'+gridHTML+'</div>':'')
-      +(incHTML?'<div class="atk-grid" style="border-top:1px solid var(--brd)">'+incHTML+'</div>':'')
+      +'<div class="atk-grid">'+gridHTML+'</div>'
       +'</div>';
 
     var tmp=document.createElement('div');
@@ -1413,7 +1397,6 @@ function rPlayers(data,allP,cl){
   Array.from(zone.children).forEach(function(el){
     if(el.id&&showIds.indexOf(el.id)<0) el.remove();
   });
-  renderAttackLinks(data);
 }
 
 /* ── Выбор цели ── */
