@@ -337,17 +337,25 @@ if (isset($_GET['action'])) {
                         'is_me'=>$id===$pid,'is_host'=>$id===$room['host_id'],'is_bot'=>$p['is_bot'],
                         'secret'=>$id===$pid?$p['secret']:''];
                 }
-                $history=array_values(array_filter($room['history'],fn($h)=>$spectator || $h['attacker_id']===$pid || $h['target_id']===$pid));
+                // Active players receive only their own outgoing history. A pending
+                // incoming guess is disclosed only to its recipient so they can answer.
+                $pendingAttack=null;
+                if (!$spectator) foreach ($room['history'] as $h) {
+                    if ($h['target_id']===$pid && !$h['confirmed']) { $pendingAttack=$h; break; }
+                }
+                $history=array_values(array_filter($room['history'],fn($h)=>$spectator || $h['attacker_id']===$pid));
                 $current=$room['status']==='playing'?($room['turn_order'][$room['current_turn_idx']]??null):null;
-                $attackOrder=$current?orderedAttackTargets($room,$current):[];
+                $canSeeAttackOrder=$spectator || $current===$pid;
+                $attackOrder=$current && $canSeeAttackOrder?orderedAttackTargets($room,$current):[];
                 $nextTarget=null;
                 foreach ($attackOrder as $orderedId) if (empty($room['attacks_this_turn'][$current][$orderedId])) { $nextTarget=$orderedId; break; }
+                $visibleAttacks=$spectator?$room['attacks_this_turn']:[$pid=>($room['attacks_this_turn'][$pid]??[])];
                 reply(['status'=>'ok','room_code'=>$code,'room_status'=>$room['status'],'code_length'=>$room['code_length'],
                     'my_id'=>$pid,'host_id'=>$room['host_id'],'is_host'=>$pid===$room['host_id'],
-                    'players'=>$players,'history'=>$history,'turn_order'=>$room['turn_order'],
+                    'players'=>$players,'history'=>$history,'pending_attack'=>$pendingAttack,'turn_order'=>$spectator?$room['turn_order']:[],
                     'current_turn_player_id'=>$current,'is_my_turn'=>$current===$pid,'round'=>$room['round'],
                     'attack_order'=>$attackOrder,'next_target_id'=>$nextTarget,
-                    'attacks_this_turn'=>$room['attacks_this_turn'],'spectator'=>$spectator,
+                    'attacks_this_turn'=>$visibleAttacks,'spectator'=>$spectator,
                     'winner_id'=>$room['winner_id']??null,'resume_token'=>$auth['resume_token']]);
             default: fail('Неизвестное действие');
         }
@@ -815,6 +823,46 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
   .cf-box,.cf-box.my-turn.attack-box{min-height:33px}
   .players-area.target-fan .p-card.compact .p-card-hd{min-height:37px}
 }
+/* Six cards in a compact, separated 2-by-3 game board. */
+.cf-label{display:none!important}
+.g-layout,.g-layout.spectator{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:4px}
+.g-center{gap:3px;overflow:visible}
+.g-roster{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.players-area,.players-area.spectator,.players-area.target-fan{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:row;grid-template-rows:repeat(3,minmax(0,1fr));align-content:stretch;gap:6px;flex:1;min-height:0;margin:0;padding:2px 0;overflow:hidden}
+.players-area.rows-1{grid-template-rows:minmax(0,1fr)}
+.players-area.rows-2{grid-template-rows:repeat(2,minmax(0,1fr))}
+.players-area .p-card,.players-area.target-fan .p-card{position:relative;display:flex;flex:initial;width:auto;height:100%;min-width:0;min-height:0;margin:0;align-self:stretch;overflow:hidden;border-radius:11px;transform:none;box-shadow:0 3px 10px rgba(0,0,0,.18);cursor:default}
+.players-area .p-card.selected,.players-area.target-fan .p-card.selected{z-index:auto;flex-basis:auto;width:auto;transform:none;border-color:rgba(255,82,82,.65);box-shadow:0 0 0 1px rgba(255,82,82,.12)}
+.players-area .p-card .p-card-hd{position:relative;z-index:1;flex:0 0 auto;min-height:36px;padding:4px 7px;gap:6px;border:0;overflow:hidden}
+.players-area .p-card .p-card-av{width:25px;height:25px;flex:0 0 25px;font-size:.85rem}
+.players-area .p-card .p-card-nm{min-width:0;font-size:.72rem;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.players-area .p-card .p-card-seq{position:absolute;right:5px;top:5px;z-index:2;display:grid;place-items:center;min-width:19px;height:19px;padding:0 3px;border:1px solid var(--brd2);border-radius:6px;background:var(--surf2);color:var(--A);font:700 .55rem var(--mono)}
+.players-area .p-card.attack-target .p-card-seq{color:var(--R)}
+.players-area .p-card .p-card-route{position:relative;z-index:1;display:flex;align-items:center;gap:4px;min-width:0;padding:2px 7px 4px;border-bottom:1px solid var(--brd);font-size:.53rem;line-height:1.1;white-space:nowrap;overflow:hidden}
+.players-area .p-card-route strong,.players-area .p-card-route b{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.players-area .p-card-route span{flex:0 0 auto;color:var(--R);font-size:.82rem;font-weight:800}
+.players-area .p-card.attack-source{isolation:isolate;border-color:rgba(200,241,53,.48);animation:soft-attacker-glow 3.6s ease-in-out infinite}
+.players-area .p-card.attack-source>.p-card-hd,.players-area .p-card.attack-source>.p-card-route,.players-area .p-card.attack-source>.atk-grid{position:relative;z-index:1}
+@keyframes soft-attacker-glow{0%,100%{background-color:rgba(200,241,53,.025);box-shadow:0 0 8px rgba(200,241,53,.05)}50%{background-color:rgba(200,241,53,.12);box-shadow:0 0 23px rgba(200,241,53,.22)}}
+.players-area .p-card .atk-grid{position:relative;z-index:1;display:flex;flex:1;flex-direction:column;gap:2px;min-height:0;padding:3px 5px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;border-top:0}
+.players-area .p-card .atk-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;align-items:center;gap:3px;flex:0 0 auto;min-width:0;min-height:14px;padding:2px 4px;font-size:.52rem;line-height:1.1}
+.players-area .p-card .atk-row-route{min-width:0;color:var(--mu2);font:500 .49rem var(--sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.players-area .p-card .atk-row-g{font-size:.52rem}
+.players-area .p-card .atk-row-h{font-size:.52rem}
+.players-area .p-card .atk-empty{padding:4px 2px;font-size:.5rem;text-align:center}
+@media(max-width:700px){
+  .players-area,.players-area.spectator,.players-area.target-fan{gap:4px}
+  .players-area .p-card .p-card-hd{min-height:32px;padding:3px 5px;gap:4px}
+  .players-area .p-card .p-card-av{width:22px;height:22px;flex-basis:22px;font-size:.75rem}
+  .players-area .p-card .p-card-nm{font-size:.64rem}
+  .players-area .p-card .p-card-seq{right:3px;top:3px;min-width:17px;height:17px;font-size:.48rem}
+  .players-area .p-card .p-card-route{gap:3px;padding:2px 5px 3px;font-size:.47rem}
+  .players-area .p-card .atk-grid{gap:1px;padding:2px 3px}
+  .players-area .p-card .atk-row{gap:2px;padding:1px 3px;font-size:.47rem}
+  .players-area .p-card .atk-row-route{font-size:.44rem}
+  .players-area .p-card .atk-row-g,.players-area .p-card .atk-row-h{font-size:.47rem}
+}
+@media(prefers-reduced-motion:reduce){.players-area .p-card.attack-source{animation:none;box-shadow:0 0 0 1px rgba(200,241,53,.2)}}
 </style>
 </head>
 <body>
@@ -900,7 +948,6 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
     </div>
     <div class="g-hdr-right">
       <div class="room-chip" id="g-room-chip">Комната: <span>—</span></div>
-      <button id="g-history-toggle" class="history-toggle" type="button" onclick="toggleHistory()" aria-expanded="false"><span class="history-handle-arrow">‹</span> История <span id="g-history-count">0</span></button>
       <div id="g-close-wrap"></div>
     </div>
   </div>
@@ -924,11 +971,6 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
   </section>
   </div>
 
-  <div id="g-history-backdrop" class="history-backdrop" onclick="toggleHistory()"></div>
-  <aside id="g-history-drawer" class="history-drawer" aria-hidden="true" aria-label="История атак">
-    <div class="history-drawer-head"><div><strong>История атак</strong><span id="g-history-subtitle"></span></div><button type="button" onclick="toggleHistory()" aria-label="Закрыть историю">×</button></div>
-    <div id="g-history-list" class="history-list"></div>
-  </aside>
 </div>
 
 <script>
@@ -939,28 +981,14 @@ var S={
   iv:{},        // значения инпутов
   noScroll:false, // флаг — не скроллить при фокусе
   crossed:{},   // зачёркнутые цифры-заметки {0:true, 3:true, ...}
-  secretVisible:true,historyOpen:false,avatars:{}
+  secretVisible:true,avatars:{}
 };
 
 function showScreen(n){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById('screen-'+n).classList.add('active');
   S.screen=n;
-  if(n!=='game') setHistoryOpen(false);
 }
-function setHistoryOpen(open){
-  S.historyOpen=!!open;
-  var drawer=document.getElementById('g-history-drawer');
-  var backdrop=document.getElementById('g-history-backdrop');
-  var button=document.getElementById('g-history-toggle');
-  if(!drawer)return;
-  drawer.classList.toggle('open',S.historyOpen);
-  drawer.setAttribute('aria-hidden',String(!S.historyOpen));
-  backdrop.classList.toggle('open',S.historyOpen);
-  button.setAttribute('aria-expanded',String(S.historyOpen));
-}
-function toggleHistory(){setHistoryOpen(!S.historyOpen);}
-document.addEventListener('keydown',function(e){if(e.key==='Escape'&&S.historyOpen)setHistoryOpen(false);});
 function goCreate(){doCreate(document.getElementById('wname').value.trim()||'Игрок');}
 async function doCreate(name){
   var r=await api('create_room',{name:name,code_length:4});
@@ -1172,8 +1200,6 @@ function rGame(data){
   document.getElementById('g-close-wrap').innerHTML='<button class="close-btn" onclick="doLeave()">← Выйти</button>';
   var layout=document.getElementById('g-layout');
   layout.classList.toggle('spectator',!!data.spectator||!!(me&&me.eliminated)||data.room_status==='finished');
-  document.getElementById('g-history-toggle').hidden=!!data.spectator;
-  if(data.spectator&&S.historyOpen)setHistoryOpen(false);
 
   // Мой секрет
   var mySecret=me&&me.secret||'';
@@ -1193,8 +1219,7 @@ function rGame(data){
   if(dn&&!dn.hasChildNodes()) renderDigitNotes();
 
   // Определяем состояние центрального поля
-  var onMe=data.history.filter(function(h){return h.target_id===data.my_id&&!h.confirmed;});
-  var pendingAtk=onMe.length?onMe[0]:null;
+  var pendingAtk=data.pending_attack||null;
 
   if(amElim||finished){
     document.getElementById('g-digit-notes').hidden=true;
@@ -1225,7 +1250,6 @@ function rGame(data){
 
   // Карточки игроков
   rPlayers(data,allP,cl);
-  renderHistoryDrawer(data);
 
 }
 
@@ -1346,7 +1370,7 @@ function playerAvatar(id){
 }
 function playerHistory(data,player){
   return data.history.filter(function(h){
-    return h.target_id===player.id&&(data.spectator||h.attacker_id===data.my_id||player.id===data.my_id);
+    return h.target_id===player.id&&(data.spectator||h.attacker_id===data.my_id);
   }).slice(-14);
 }
 function attackGridHTML(data,attacks){
@@ -1355,35 +1379,22 @@ function attackGridHTML(data,attacks){
     var attacker=data.players[h.attacker_id],target=data.players[h.target_id];
     var title=attacker&&target?attacker.name+' → '+target.name+' · раунд '+h.round:'Раунд '+h.round;
     return '<div class="atk-row'+(h.confirmed?'':' atk-row-wait')+'" title="'+title+'">'
+      +'<span class="atk-row-route">'+(attacker?attacker.name+(attacker.is_bot?' 🤖':''):'Игрок')+' → '+(target?target.name+(target.is_bot?' 🤖':''):'Игрок')+'</span>'
       +'<span class="atk-row-g">'+h.guess+'</span><span class="atk-row-sep">-</span>'
       +'<span class="atk-row-h">'+(h.confirmed?h.hits:'?')+'</span></div>';
   }).join('');
 }
-function renderHistoryDrawer(data){
-  var history=data.history||[];
-  var list=document.getElementById('g-history-list');
-  var scrollTop=list.scrollTop;
-  document.getElementById('g-history-count').textContent=history.length;
-  document.getElementById('g-history-subtitle').textContent=history.length+' атак';
-  if(!history.length){list.innerHTML='<div class="history-empty">Атак пока нет</div>';return;}
-  var groups={};
-  history.forEach(function(h){(groups[h.target_id]||(groups[h.target_id]=[])).push(h);});
-  list.innerHTML=Object.keys(groups).map(function(targetId){
-    var target=data.players[targetId], targetName=target?target.name:'Игрок';
-    return '<section class="history-group"><div class="history-group-title">История атак на «'+targetName+'»</div>'
-      +'<div class="history-attack-grid">'+attackGridHTML(data,groups[targetId].slice(-14))+'</div></section>';
-  }).join('');
-  list.scrollTop=scrollTop;
-}
-
 function rPlayers(data,allP,cl){
   var zone=document.getElementById('g-players');
   var toShow=allP.slice();
-  var mePlayer=allP.find(function(p){return p.is_me;});
-  zone.classList.toggle('target-fan',!data.spectator&&!(mePlayer&&mePlayer.eliminated)&&data.room_status!=='finished');
+  zone.classList.remove('target-fan','rows-1','rows-2','rows-3');
+  zone.classList.add('rows-'+Math.max(1,Math.min(3,Math.ceil(toShow.length/2))));
   var curPid=data.current_turn_player_id;
-  var attackOrder=data.attack_order||[];
-  var turnTargets=curPid&&data.attacks_this_turn&&data.attacks_this_turn[curPid]
+  var canSeeAttackOrder=!!data.spectator||!!data.is_my_turn;
+  var attackOrder=canSeeAttackOrder?(data.attack_order||[]):[];
+  var nextTarget=canSeeAttackOrder&&data.next_target_id?data.players[data.next_target_id]:null;
+  var activeActor=curPid?data.players[curPid]:null;
+  var turnTargets=canSeeAttackOrder&&curPid&&data.attacks_this_turn&&data.attacks_this_turn[curPid]
     ?Object.keys(data.attacks_this_turn[curPid]):[];
   var lastTurnTarget=turnTargets.length?turnTargets[turnTargets.length-1]:null;
   var fanLead=data.next_target_id||lastTurnTarget;
@@ -1407,12 +1418,14 @@ function rPlayers(data,allP,cl){
       var compactKey=JSON.stringify({turn:isTurn,elim:isElim,selected:selectedTarget,target:isAttackTarget,done:myTurnDone,name:p.name,host:data.is_host,order:targetIndex,history:compactAttacks.map(function(h){return h.id+':'+h.confirmed+':'+h.hits;})});
       var compact=document.getElementById(cardId);
       if(compact&&compact.dataset.key===compactKey)return;
+      var route=(isTurn&&nextTarget)?'<div class="p-card-route"><strong>'+p.name+(p.is_bot?' 🤖':'')+'</strong><span>→</span><b>'+nextTarget.name+(nextTarget.is_bot?' 🤖':'')+'</b></div>'
+        :targetIndex>=0&&activeActor?'<div class="p-card-route"><strong>'+activeActor.name+(activeActor.is_bot?' 🤖':'')+'</strong><span>→</span><b>'+p.name+(p.is_bot?' 🤖':'')+'</b></div>':'';
       var compactHTML='<div id="'+cardId+'" class="p-card compact'+(isTurn?' turn':'')+(isElim?' elim':'')+(selectedTarget?' selected':'')+stateClass+'">'
         +'<div class="p-card-hd"><div class="p-card-av">'+playerAvatar(p.id)+'</div>'
-        +'<div class="p-card-nm">'+p.name+(p.is_bot?' 🤖':'')+'</div><span class="p-card-seq">'+(targetIndex>=0?'#'+(targetIndex+1):isTurn?'ХОД':'')+'</span>'
+        +'<div class="p-card-nm">'+p.name+(p.is_bot?' 🤖':'')+'</div><span class="p-card-seq">'+(targetIndex>=0?'#'+(targetIndex+1):'')+'</span>'
         +(isTurn?'<div class="turn-dot"></div>':'')
         +(data.is_host&&!p.is_me&&!isElim?'<button class="kick-btn" onclick="event.stopPropagation();doKick(\''+p.id+'\')">✕</button>':'')
-        +'</div><div class="atk-grid">'+attackGridHTML(data,compactAttacks)+'</div></div>';
+        +'</div>'+route+'<div class="atk-grid">'+attackGridHTML(data,compactAttacks)+'</div></div>';
       var compactWrap=document.createElement('div');compactWrap.innerHTML=compactHTML;
       var compactEl=compactWrap.firstChild;compactEl.dataset.key=compactKey;
       if(!compact)zone.appendChild(compactEl);else compact.replaceWith(compactEl);
@@ -1431,13 +1444,14 @@ function rPlayers(data,allP,cl){
 
     var gridHTML=attackGridHTML(data,cardAttacks);
 
-    var cardHTML='<div id="'+cardId+'" class="p-card'+(isTurn?' turn attack-source':'')+(isAttackTarget?' attack-target':'')+(isElim?' elim':'')+'">'
+    var route=targetIndex>=0&&activeActor?'<div class="p-card-route"><strong>'+activeActor.name+(activeActor.is_bot?' 🤖':'')+'</strong><span>→</span><b>'+p.name+(p.is_bot?' 🤖':'')+'</b></div>':'';
+    var cardHTML='<div id="'+cardId+'" class="p-card'+(isTurn?' turn attack-source':'')+(isAttackTarget?' attack-target':'')+(selectedTarget?' selected':'')+(isElim?' elim':'')+'">'
       +'<div class="p-card-hd">'
       +'<div class="p-card-av">'+playerAvatar(p.id)+'</div>'
       +'<div class="p-card-nm">'+p.name+(p.is_bot?' 🤖':'')+(isElim?' <span style="font-size:.6rem;color:var(--R)">Выбыл</span>':'')+'</div>'
       +(isTurn?'<div class="turn-dot"></div>':'')
       +(data.is_host&&!p.is_me&&!isElim?'<button class="kick-btn" onclick="doKick(\''+p.id+'\')">✕</button>':'')
-      +'</div>'
+      +'</div>'+route
       +'<div class="atk-grid">'+gridHTML+'</div>'
       +'</div>';
 
