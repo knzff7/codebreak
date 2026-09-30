@@ -387,9 +387,6 @@ html,body{height:100%}
 body{font-family:var(--sans);background:var(--bg);color:var(--tx);overflow-x:hidden;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;overscroll-behavior-y:contain}
 @media(max-width:375px){.cf-inp{font-size:1.8rem}.cf-code{font-size:1.8rem}.my-secret-val{font-size:2rem;padding:8px 14px}.h-btn{width:30px;height:30px;font-size:.78rem}}
 @media(max-width:430px){.g-center{gap:8px}.my-secret-val{font-size:2.2rem}}
-/* Фикс прыжка — фокус не скроллит */
-input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
-
 .screen{display:none;min-height:100dvh;padding:0 16px calc(60px + env(safe-area-inset-bottom));max-width:460px;margin:0 auto}
 .screen.active{display:flex;flex-direction:column}
 .btn{border:none;border-radius:12px;font-family:var(--sans);font-weight:700;font-size:.9rem;padding:14px;cursor:pointer;transition:transform .12s;text-transform:uppercase;letter-spacing:.02em}
@@ -519,9 +516,7 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
 /* Выбор совпадений */
 .hits-panel{background:var(--surf);border:1.5px solid var(--brd);border-radius:12px;padding:12px 14px}
 .hits-lbl{font-family:var(--mono);font-size:.5rem;letter-spacing:.15em;color:var(--mu2);text-transform:uppercase;margin-bottom:8px;text-align:center}
-.hits-btns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
 .h-btn{background:var(--surf2);border:1.5px solid var(--brd);border-radius:8px;color:var(--tx);font-family:var(--mono);font-size:1rem;font-weight:700;width:38px;height:38px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
-.h-btn.sel{background:rgba(200,241,53,.15);border-color:rgba(200,241,53,.5);color:var(--A)}
 .send-btn{width:100%;background:var(--surf2);border:1.5px solid var(--brd);border-radius:10px;color:var(--mu2);font-family:var(--sans);font-weight:700;font-size:.8rem;padding:10px;cursor:pointer;transition:all .15s}
 .send-btn.ok{background:var(--G);border-color:var(--G);color:#080808}
 .send-btn:disabled{opacity:.35;cursor:default}
@@ -584,7 +579,7 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
 .kick-btn{background:none;border:none;color:var(--mu);font-size:.9rem;cursor:pointer;padding:2px 6px;border-radius:5px;line-height:1;opacity:.5;transition:opacity .15s}
 .kick-btn:hover{opacity:1;color:var(--R)}
 /* Кнопка назад на join */
-.back{position:absolute;top:20px;left:16px;background:none;border:none;color:var(--mu2);font-family:var(--mono);font-size:.7rem;cursor:pointer;letter-spacing:.1em;padding:8px 0}
+.back{position:absolute;top:16px;left:16px;background:none;border:none;color:var(--mu2);font-family:var(--mono);font-size:.75rem;cursor:pointer;letter-spacing:.08em;padding:6px 0;display:flex;align-items:center;gap:4px}
 
 /* One-screen game layout */
 #screen-game.active{width:100%;max-width:1120px;height:100dvh;min-height:0;overflow:hidden;padding:8px 14px max(8px,env(safe-area-inset-bottom))}
@@ -634,46 +629,16 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
 .history-entry-result.pending{color:var(--mu2)}
 .history-empty{padding:20px 4px;color:var(--mu2);font-size:.78rem;text-align:center}
 .g-roster{position:relative}
-.attack-stage{display:flex;align-items:center;gap:10px;min-height:88px;padding:8px 12px;margin:0 0 8px;border:1px solid var(--brd);border-radius:16px;background:linear-gradient(105deg,rgba(200,241,53,.06),var(--surf) 36%,rgba(255,82,82,.05));overflow:hidden;flex-shrink:0}
-.attack-stage-source{width:clamp(118px,20%,190px);flex:0 0 auto;display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid rgba(200,241,53,.3);border-radius:12px;background:rgba(0,0,0,.35)}
-.attack-stage-avatar{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:11px;background:var(--surf2);font-size:1.4rem}
-.attack-stage-name{font-size:.78rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.attack-stage-role{display:block;margin-top:3px;color:var(--A);font:600 .5rem var(--mono);letter-spacing:.08em;text-transform:uppercase}
-.attack-stage-gap{height:2px;min-width:22px;flex:0 0 6%;background:linear-gradient(90deg,rgba(200,241,53,.45),rgba(255,82,82,.4));position:relative}
-.attack-stage-gap:before,.attack-stage-gap:after{content:"";position:absolute;top:-4px;width:10px;height:10px;border:1.5px solid var(--A);border-radius:50%;background:var(--bg)}
-.attack-stage-gap:before{left:0}.attack-stage-gap:after{right:0;border-color:var(--R)}
-.attack-stage-targets{display:flex;gap:5px;align-items:stretch;flex:1;min-width:0;min-height:62px;overflow:hidden}
-.attack-stage-card{flex:1 1 0;min-width:34px;display:flex;align-items:center;justify-content:center;gap:6px;padding:6px;border:1px solid var(--brd2);border-radius:11px;background:var(--surf);overflow:hidden;transition:flex .25s ease,border-color .2s,background .2s,box-shadow .2s}
-.attack-stage-card.active{flex:1.7 1 0;border-color:rgba(255,82,82,.55);background:linear-gradient(145deg,rgba(255,82,82,.13),var(--surf));box-shadow:inset 0 0 18px rgba(255,82,82,.08);animation:accordion-open .35s ease-out both}
-.attack-stage-card.selected{flex:2.2 1 0;border-color:rgba(200,241,53,.65);background:linear-gradient(145deg,rgba(200,241,53,.15),var(--surf));box-shadow:inset 0 0 18px rgba(200,241,53,.08);animation:accordion-open .4s ease-out both}
-.attack-stage-card .attack-stage-avatar{width:31px;height:31px;flex-basis:31px;font-size:1.1rem;border-radius:9px}
-.attack-stage-card .attack-stage-name{font-size:.68rem}
-.attack-stage-card:not(.active):not(.selected) .attack-stage-name{max-width:100%;opacity:.75}
-.attack-stage-card .attack-stage-mark{color:var(--R);font-size:.75rem;flex:0 0 auto}
-.attack-stage-empty{color:var(--mu2);font-size:.62rem;text-align:center;flex:1}
-@keyframes accordion-open{from{opacity:.4;transform:scaleX(.35)}to{opacity:1;transform:scaleX(1)}}
 .history-attack-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:column;grid-template-rows:repeat(7,auto);gap:2px 5px;padding:5px 7px}
 .players-area.spectator{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);overflow-y:auto;overflow-x:hidden;align-content:stretch;overscroll-behavior:contain}
 .g-layout.spectator{grid-template-columns:minmax(250px,.72fr) minmax(0,1.28fr)}
 @media(max-width:700px){
   #screen-game.active{padding:6px 10px max(6px,env(safe-area-inset-bottom))}
-  .attack-stage{min-height:68px;padding:4px 6px;gap:4px;margin-bottom:5px;border-radius:12px}
-  .attack-stage-source{width:clamp(72px,26vw,145px);gap:4px;padding:5px;border-radius:9px}
-  .attack-stage-source .attack-stage-avatar{width:28px;height:28px;flex-basis:28px;font-size:1rem}
-  .attack-stage-source .attack-stage-name{font-size:.64rem}
-  .attack-stage-role{font-size:.43rem;margin-top:2px}
-  .attack-stage-gap{min-width:12px;flex-basis:4%}
-  .attack-stage-targets{gap:2px;min-height:48px}
-  .attack-stage-card{min-width:24px;gap:2px;padding:3px;border-radius:8px}
-  .attack-stage-card .attack-stage-avatar{width:24px;height:24px;flex-basis:24px;font-size:.9rem}
-  .attack-stage-card .attack-stage-name{font-size:.48rem;max-width:1.2ch;opacity:.75}
-  .attack-stage-card.active .attack-stage-name,.attack-stage-card.selected .attack-stage-name{max-width:5rem;opacity:1}
   .g-title{font-size:.85rem}
   .room-chip{padding:4px 6px;font-size:.55rem;letter-spacing:.08em}
   .history-toggle{gap:4px;padding:5px 6px;font-size:.58rem}
   .close-btn{padding:4px 6px;font-size:.52rem}
-  .g-order{font-size:.56rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .g-layout,.g-layout.spectator{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,auto) minmax(0,1fr);gap:6px}
+.g-layout.spectator .g-center{gap:2px}
   .g-center{gap:4px}
   .my-secret-lbl{font-size:.46rem;margin-bottom:3px}
   .my-secret-val{font-size:1.8rem;padding:5px 14px;letter-spacing:.3em}
@@ -694,7 +659,6 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
   .btn{padding:9px;font-size:.76rem}
   .hits-panel{padding:6px 8px}
   .hits-lbl{margin-bottom:4px}
-  .hits-btns{margin-bottom:4px}
   .h-btn{width:28px;height:28px;font-size:.8rem}
   .send-btn{padding:7px;font-size:.7rem}
   .target-sel.attack-targets{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
@@ -723,9 +687,6 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
   .target-sel.attack-targets{gap:3px}
   .t-btn.attack-card{min-height:30px;padding:4px 2px;font-size:.64rem}
   .cf-box,.cf-box.my-turn.attack-box{min-height:42px}
-}
-@media(prefers-reduced-motion:reduce){
-  .attack-stage-card{animation:none!important;transition:none}
 }
 /* Compact vertical game screen: secret, attack pad, then the player fan. */
 #screen-game.active{display:flex;flex-direction:column;max-width:1120px;height:100dvh;min-height:0;padding:7px 14px max(7px,env(safe-area-inset-bottom));overflow:hidden}
@@ -759,25 +720,6 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
 .cf-actions .keypad-launch{flex:1;padding:8px 10px}
 .g-roster{position:relative;min-height:0;overflow:hidden}
 .g-roster .panel-sub{margin:0 0 3px;font-size:.58rem;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.players-area.target-fan{display:flex;align-items:stretch;gap:0;overflow:hidden;min-height:0;flex:1;padding:3px 0 1px}
-.players-area.target-fan .p-card{position:relative;flex:0 0 28%;width:28%;height:100%;min-height:0;margin-left:-14%;overflow:hidden;border-radius:13px;background:linear-gradient(155deg,var(--surf2),var(--surf) 55%);transition:flex-basis .22s ease,transform .22s ease,box-shadow .2s;box-shadow:0 7px 15px rgba(0,0,0,.24)}
-.players-area.target-fan .p-card:first-child{margin-left:0}
-.players-area.target-fan .p-card.selected{z-index:10;flex-basis:44%;width:44%;border-color:rgba(200,241,53,.72);transform:translateY(-2px);box-shadow:0 9px 24px rgba(0,0,0,.35),0 0 16px rgba(200,241,53,.13)}
-.players-area.target-fan .p-card.attack-target:not(.selected){border-color:rgba(255,82,82,.62)}
-.players-area.target-fan .p-card.compact .p-card-hd{min-height:48px;padding:6px;gap:5px;align-items:center;overflow:hidden}
-.players-area.target-fan .p-card.compact.selected .p-card-hd{min-height:68px;padding:9px;gap:9px}
-.players-area.target-fan .p-card.compact .p-card-av{width:27px;height:27px;flex:0 0 27px}
-.players-area.target-fan .p-card.compact.selected .p-card-av{width:46px;height:46px;flex:0 0 46px;font-size:1.4rem}
-.players-area.target-fan .p-card.compact .p-card-nm{font-size:.7rem;line-height:1.15;white-space:normal;overflow:hidden;overflow-wrap:anywhere}
-.players-area.target-fan .p-card.compact.selected .p-card-nm{font-size:1rem}
-.players-area.target-fan .p-card.compact .p-card-seq{position:absolute;top:5px;right:5px;display:grid;place-items:center;min-width:22px;height:22px;padding:0 4px;border:1px solid rgba(200,241,53,.35);border-radius:7px;background:var(--surf2);color:var(--A);font:700 .62rem var(--mono);letter-spacing:0;z-index:2}
-.players-area.target-fan .p-card.attack-target .p-card-seq{color:var(--R)}
-.players-area.target-fan .p-card-state{font-size:.46rem;line-height:1.1;white-space:normal}
-.players-area.target-fan .p-card.compact .atk-grid{display:none}
-.players-area.target-fan .p-card.compact.selected .atk-grid{display:grid;flex:1;min-height:0;align-content:start;grid-template-rows:repeat(7,minmax(0,auto));gap:2px;padding:4px;border-top:1px solid var(--brd)}
-.players-area.target-fan .atk-row{min-width:0;padding:2px 3px;font-size:.56rem;line-height:1.15;gap:2px}
-.players-area.target-fan .atk-row-g{font-size:.57rem}
-.players-area.target-fan .atk-row-h{font-size:.53rem}
 .history-drawer{width:min(280px,80vw);padding:11px}
 .history-drawer-head{padding-bottom:8px}
 .g-layout.spectator .players-area{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);overflow-y:auto;overflow-x:hidden}
@@ -802,18 +744,6 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
   .cf-actions{width:min(100%,380px)}
   .cf-actions .btn{padding:6px 8px;font-size:.7rem}
   .g-roster .panel-sub{font-size:.52rem}
-  .players-area.target-fan .p-card{flex-basis:27%;width:27%;margin-left:-16%}
-  .players-area.target-fan .p-card:first-child{margin-left:0}
-  .players-area.target-fan .p-card.selected{flex-basis:48%;width:48%}
-  .players-area.target-fan .p-card.compact .p-card-hd{min-height:43px;padding:4px;gap:3px}
-  .players-area.target-fan .p-card.compact.selected .p-card-hd{min-height:58px;padding:6px;gap:6px}
-  .players-area.target-fan .p-card.compact .p-card-av{width:23px;height:23px;flex-basis:23px;font-size:.8rem}
-  .players-area.target-fan .p-card.compact.selected .p-card-av{width:36px;height:36px;flex-basis:36px;font-size:1.1rem}
-  .players-area.target-fan .p-card.compact .p-card-nm{font-size:.61rem}
-  .players-area.target-fan .p-card.compact.selected .p-card-nm{font-size:.84rem}
-  .players-area.target-fan .p-card-state{font-size:.4rem}
-  .players-area.target-fan .p-card.compact.selected .atk-grid{gap:1px;padding:3px}
-  .players-area.target-fan .atk-row{font-size:.5rem;padding:1px 2px;min-height:12px}
 }
 @media(max-height:650px){
   .my-secret-val{font-size:1.3rem;padding:2px 8px}
@@ -821,48 +751,44 @@ input,button{scroll-margin:0}input:focus{scroll-margin:0;outline:none}
   .attack-keypad{grid-auto-rows:42px}
   .attack-keypad .dn-btn{min-height:42px}
   .cf-box,.cf-box.my-turn.attack-box{min-height:33px}
-  .players-area.target-fan .p-card.compact .p-card-hd{min-height:37px}
 }
-/* Six cards in a compact, separated 2-by-3 game board. */
-.cf-label{display:none!important}
+/* Шесть карточек: компактная сетка 2×3 */
 .g-layout,.g-layout.spectator{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:4px}
 .g-center{gap:3px;overflow:visible}
 .g-roster{display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.players-area,.players-area.spectator,.players-area.target-fan{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:row;grid-template-rows:repeat(3,minmax(0,1fr));align-content:stretch;gap:6px;flex:1;min-height:0;margin:0;padding:2px 0;overflow:hidden}
+.players-area,.players-area.spectator{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:row;grid-template-rows:repeat(3,minmax(0,1fr));align-content:stretch;gap:6px;flex:1;min-height:0;margin:0;padding:2px 0;overflow:hidden}
 .players-area.rows-1{grid-template-rows:minmax(0,1fr)}
 .players-area.rows-2{grid-template-rows:repeat(2,minmax(0,1fr))}
-.players-area .p-card,.players-area.target-fan .p-card{position:relative;display:flex;flex:initial;width:auto;height:100%;min-width:0;min-height:0;margin:0;align-self:stretch;overflow:hidden;border-radius:11px;transform:none;box-shadow:0 3px 10px rgba(0,0,0,.18);cursor:default}
-.players-area .p-card.selected,.players-area.target-fan .p-card.selected{z-index:auto;flex-basis:auto;width:auto;transform:none;border-color:rgba(255,82,82,.65);box-shadow:0 0 0 1px rgba(255,82,82,.12)}
+.players-area .p-card{position:relative;display:flex;flex:initial;width:auto;height:100%;min-width:0;min-height:0;margin:0;align-self:stretch;overflow:hidden;border-radius:11px;transform:none;cursor:default}
+.players-area .p-card.selected{z-index:auto;flex-basis:auto;width:auto;transform:none;border-color:rgba(255,82,82,.65);box-shadow:0 0 0 1px rgba(255,82,82,.12)}
 .players-area .p-card .p-card-hd{position:relative;z-index:1;flex:0 0 auto;min-height:36px;padding:4px 7px;gap:6px;border:0;overflow:hidden}
 .players-area .p-card .p-card-av{width:25px;height:25px;flex:0 0 25px;font-size:.85rem}
 .players-area .p-card .p-card-nm{min-width:0;font-size:.72rem;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .players-area .p-card .p-card-seq{position:absolute;right:5px;top:5px;z-index:2;display:grid;place-items:center;min-width:19px;height:19px;padding:0 3px;border:1px solid var(--brd2);border-radius:6px;background:var(--surf2);color:var(--A);font:700 .55rem var(--mono)}
 .players-area .p-card.attack-target .p-card-seq{color:var(--R)}
-.players-area .p-card .p-card-route{position:relative;z-index:1;display:flex;align-items:center;gap:4px;min-width:0;padding:2px 7px 4px;border-bottom:1px solid var(--brd);font-size:.53rem;line-height:1.1;white-space:nowrap;overflow:hidden}
-.players-area .p-card-route strong,.players-area .p-card-route b{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.players-area .p-card-route span{flex:0 0 auto;color:var(--R);font-size:.82rem;font-weight:800}
 .players-area .p-card.attack-source{isolation:isolate;border-color:rgba(200,241,53,.48);animation:soft-attacker-glow 3.6s ease-in-out infinite}
-.players-area .p-card.attack-source>.p-card-hd,.players-area .p-card.attack-source>.p-card-route,.players-area .p-card.attack-source>.atk-grid{position:relative;z-index:1}
-@keyframes soft-attacker-glow{0%,100%{background-color:rgba(200,241,53,.025);box-shadow:0 0 8px rgba(200,241,53,.05)}50%{background-color:rgba(200,241,53,.12);box-shadow:0 0 23px rgba(200,241,53,.22)}}
-.players-area .p-card .atk-grid{position:relative;z-index:1;display:flex;flex:1;flex-direction:column;gap:2px;min-height:0;padding:3px 5px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;border-top:0}
-.players-area .p-card .atk-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;align-items:center;gap:3px;flex:0 0 auto;min-width:0;min-height:14px;padding:2px 4px;font-size:.52rem;line-height:1.1}
-.players-area .p-card .atk-row-route{min-width:0;color:var(--mu2);font:500 .49rem var(--sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.players-area .p-card .atk-row-g{font-size:.52rem}
-.players-area .p-card .atk-row-h{font-size:.52rem}
+.players-area .p-card.attack-source>.p-card-hd,.players-area .p-card.attack-source>.atk-grid{position:relative;z-index:1}
+/* Свечение только позади карточки: фон не мигает, тень мягко пульсирует */
+@keyframes soft-attacker-glow{0%,100%{box-shadow:0 3px 12px rgba(0,0,0,.18),0 0 10px rgba(200,241,53,.07)}50%{box-shadow:0 4px 16px rgba(0,0,0,.18),0 0 26px 5px rgba(200,241,53,.3)}}
+@media(prefers-reduced-motion:reduce){.players-area .p-card.attack-source{animation:none;box-shadow:0 0 0 1px rgba(200,241,53,.2),0 0 18px rgba(200,241,53,.18)}}
+.players-area .p-card.attack-target{box-shadow:0 3px 14px rgba(255,82,82,.12),0 0 16px rgba(255,82,82,.08)}
+/* История в карточке: сетка 2 колонки × 7 строк, заполняется сверху вниз */
+.players-area .p-card .atk-grid{position:relative;z-index:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:column;grid-template-rows:repeat(7,minmax(0,auto));align-content:start;gap:2px 6px;flex:1;min-height:0;padding:3px 5px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;border-top:0}
+.players-area .p-card .atk-row{display:flex;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:14px;padding:2px 3px;border-radius:4px;background:var(--surf2);font-size:.52rem;line-height:1.1}
+.players-area .p-card .atk-row-wait{background:rgba(200,241,53,.06)}
+.players-area .p-card .atk-row-g{font-weight:700}
+.players-area .p-card .atk-row-h{font-weight:700;color:var(--G)}
 .players-area .p-card .atk-empty{padding:4px 2px;font-size:.5rem;text-align:center}
 @media(max-width:700px){
-  .players-area,.players-area.spectator,.players-area.target-fan{gap:4px}
+  .players-area,.players-area.spectator{gap:4px}
   .players-area .p-card .p-card-hd{min-height:32px;padding:3px 5px;gap:4px}
   .players-area .p-card .p-card-av{width:22px;height:22px;flex-basis:22px;font-size:.75rem}
   .players-area .p-card .p-card-nm{font-size:.64rem}
   .players-area .p-card .p-card-seq{right:3px;top:3px;min-width:17px;height:17px;font-size:.48rem}
-  .players-area .p-card .p-card-route{gap:3px;padding:2px 5px 3px;font-size:.47rem}
   .players-area .p-card .atk-grid{gap:1px;padding:2px 3px}
   .players-area .p-card .atk-row{gap:2px;padding:1px 3px;font-size:.47rem}
-  .players-area .p-card .atk-row-route{font-size:.44rem}
   .players-area .p-card .atk-row-g,.players-area .p-card .atk-row-h{font-size:.47rem}
 }
-@media(prefers-reduced-motion:reduce){.players-area .p-card.attack-source{animation:none;box-shadow:0 0 0 1px rgba(200,241,53,.2)}}
 </style>
 </head>
 <body>
@@ -1368,6 +1294,16 @@ function playerAvatar(id){
   if(!S.avatars[id])S.avatars[id]=avatars[Math.floor(Math.random()*avatars.length)];
   return S.avatars[id];
 }
+function attackLabel(data,h){
+  var a=data.players[h.attacker_id],t=data.players[h.target_id];
+  return (a?a.name:'Игрок')+' → '+(t?t.name:'Игрок')+' · Раунд '+h.round;
+}
+function nameStyle(name){
+  // Размер имени подстраивается под длину, сама карточка не меняется.
+  var n=(name||'').length;
+  var size=n<=5?'1.05rem':n<=8?'.85rem':n<=11?'.72rem':n<=14?'.62rem':'.54rem';
+  return 'font-size:'+size;
+}
 function playerHistory(data,player){
   return data.history.filter(function(h){
     return h.target_id===player.id&&(data.spectator||h.attacker_id===data.my_id);
@@ -1376,18 +1312,16 @@ function playerHistory(data,player){
 function attackGridHTML(data,attacks){
   if(!attacks.length)return '<div class="atk-empty">атак пока нет</div>';
   return attacks.map(function(h){
-    var attacker=data.players[h.attacker_id],target=data.players[h.target_id];
-    var title=attacker&&target?attacker.name+' → '+target.name+' · раунд '+h.round:'Раунд '+h.round;
-    return '<div class="atk-row'+(h.confirmed?'':' atk-row-wait')+'" title="'+title+'">'
-      +'<span class="atk-row-route">'+(attacker?attacker.name+(attacker.is_bot?' 🤖':''):'Игрок')+' → '+(target?target.name+(target.is_bot?' 🤖':''):'Игрок')+'</span>'
+    return '<div class="atk-row'+(h.confirmed?'':' atk-row-wait')+'" title="Раунд '+h.round+'">'
       +'<span class="atk-row-g">'+h.guess+'</span><span class="atk-row-sep">-</span>'
       +'<span class="atk-row-h">'+(h.confirmed?h.hits:'?')+'</span></div>';
   }).join('');
 }
 function rPlayers(data,allP,cl){
   var zone=document.getElementById('g-players');
-  var toShow=allP.slice();
-  zone.classList.remove('target-fan','rows-1','rows-2','rows-3');
+  // Фиксированный порядок: моя карточка всегда первая, остальные в стабильном порядке входа.
+  var toShow=allP.slice().sort(function(a,b){return (b.is_me?1:0)-(a.is_me?1:0);});
+  zone.classList.remove('rows-1','rows-2','rows-3');
   zone.classList.add('rows-'+Math.max(1,Math.min(3,Math.ceil(toShow.length/2))));
   var curPid=data.current_turn_player_id;
   var canSeeAttackOrder=!!data.spectator||!!data.is_my_turn;
@@ -1396,19 +1330,13 @@ function rPlayers(data,allP,cl){
   var activeActor=curPid?data.players[curPid]:null;
   var turnTargets=canSeeAttackOrder&&curPid&&data.attacks_this_turn&&data.attacks_this_turn[curPid]
     ?Object.keys(data.attacks_this_turn[curPid]):[];
-  var lastTurnTarget=turnTargets.length?turnTargets[turnTargets.length-1]:null;
-  var fanLead=data.next_target_id||lastTurnTarget;
-  toShow.sort(function(a,b){
-    function rank(p){if(p.id===fanLead)return -1;var i=attackOrder.indexOf(p.id);return i<0?attackOrder.length+1:i+1;}
-    return rank(a)-rank(b);
-  });
 
   toShow.forEach(function(p){
     var isTurn=p.id===curPid;
     var isElim=p.eliminated;
     var cardId='pcard-'+p.id;
     var myTurnDone=!!(data.attacks_this_turn&&data.attacks_this_turn[data.my_id]&&data.attacks_this_turn[data.my_id][p.id]);
-    var selectedTarget=p.id===fanLead;
+    var selectedTarget=!!(nextTarget&&p.id===nextTarget.id);
     var targetIndex=attackOrder.indexOf(p.id);
     var isAttackTarget=turnTargets.indexOf(p.id)>=0||selectedTarget;
 
@@ -1418,14 +1346,12 @@ function rPlayers(data,allP,cl){
       var compactKey=JSON.stringify({turn:isTurn,elim:isElim,selected:selectedTarget,target:isAttackTarget,done:myTurnDone,name:p.name,host:data.is_host,order:targetIndex,history:compactAttacks.map(function(h){return h.id+':'+h.confirmed+':'+h.hits;})});
       var compact=document.getElementById(cardId);
       if(compact&&compact.dataset.key===compactKey)return;
-      var route=(isTurn&&nextTarget)?'<div class="p-card-route"><strong>'+p.name+(p.is_bot?' 🤖':'')+'</strong><span>→</span><b>'+nextTarget.name+(nextTarget.is_bot?' 🤖':'')+'</b></div>'
-        :targetIndex>=0&&activeActor?'<div class="p-card-route"><strong>'+activeActor.name+(activeActor.is_bot?' 🤖':'')+'</strong><span>→</span><b>'+p.name+(p.is_bot?' 🤖':'')+'</b></div>':'';
       var compactHTML='<div id="'+cardId+'" class="p-card compact'+(isTurn?' turn':'')+(isElim?' elim':'')+(selectedTarget?' selected':'')+stateClass+'">'
         +'<div class="p-card-hd"><div class="p-card-av">'+playerAvatar(p.id)+'</div>'
-        +'<div class="p-card-nm">'+p.name+(p.is_bot?' 🤖':'')+'</div><span class="p-card-seq">'+(targetIndex>=0?'#'+(targetIndex+1):'')+'</span>'
+        +'<div class="p-card-nm" style="'+nameStyle(p.name)+'">'+p.name+(p.is_bot?' 🤖':'')+'</div><span class="p-card-seq">'+(targetIndex>=0?'#'+(targetIndex+1):'')+'</span>'
         +(isTurn?'<div class="turn-dot"></div>':'')
         +(data.is_host&&!p.is_me&&!isElim?'<button class="kick-btn" onclick="event.stopPropagation();doKick(\''+p.id+'\')">✕</button>':'')
-        +'</div>'+route+'<div class="atk-grid">'+attackGridHTML(data,compactAttacks)+'</div></div>';
+        +'</div><div class="atk-grid">'+attackGridHTML(data,compactAttacks)+'</div></div>';
       var compactWrap=document.createElement('div');compactWrap.innerHTML=compactHTML;
       var compactEl=compactWrap.firstChild;compactEl.dataset.key=compactKey;
       if(!compact)zone.appendChild(compactEl);else compact.replaceWith(compactEl);
@@ -1444,14 +1370,13 @@ function rPlayers(data,allP,cl){
 
     var gridHTML=attackGridHTML(data,cardAttacks);
 
-    var route=targetIndex>=0&&activeActor?'<div class="p-card-route"><strong>'+activeActor.name+(activeActor.is_bot?' 🤖':'')+'</strong><span>→</span><b>'+p.name+(p.is_bot?' 🤖':'')+'</b></div>':'';
-    var cardHTML='<div id="'+cardId+'" class="p-card'+(isTurn?' turn attack-source':'')+(isAttackTarget?' attack-target':'')+(selectedTarget?' selected':'')+(isElim?' elim':'')+'">'
+    var cardHTML='<div id="'+cardId+'" class="p-card'+(isTurn?' turn attack-source':'')+(isAttackTarget?' attack-target':'')+(isElim?' elim':'')+'">'
       +'<div class="p-card-hd">'
       +'<div class="p-card-av">'+playerAvatar(p.id)+'</div>'
-      +'<div class="p-card-nm">'+p.name+(p.is_bot?' 🤖':'')+(isElim?' <span style="font-size:.6rem;color:var(--R)">Выбыл</span>':'')+'</div>'
+      +'<div class="p-card-nm" style="'+nameStyle(p.name)+'">'+p.name+(p.is_bot?' 🤖':'')+(isElim?' <span style="font-size:.6rem;color:var(--R)">Выбыл</span>':'')+'</div>'
       +(isTurn?'<div class="turn-dot"></div>':'')
       +(data.is_host&&!p.is_me&&!isElim?'<button class="kick-btn" onclick="doKick(\''+p.id+'\')">✕</button>':'')
-      +'</div>'+route
+      +'</div>'
       +'<div class="atk-grid">'+gridHTML+'</div>'
       +'</div>';
 
@@ -1473,7 +1398,6 @@ function rPlayers(data,allP,cl){
   Array.from(zone.children).forEach(function(el){
     if(el.id&&showIds.indexOf(el.id)<0) el.remove();
   });
-  toShow.forEach(function(p){var card=document.getElementById('pcard-'+p.id);if(card)zone.appendChild(card);});
 }
 
 /* ── Выбор цели ── */
